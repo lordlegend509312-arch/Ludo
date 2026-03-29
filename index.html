@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"/>
 <title>Ludo — Online Multiplayer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@700;900&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --gold:#F5C518;--gold2:#b8920f;--pink:#FF2D78;--blue:#00AEEF;--green:#00C853;--yellow:#FFD600;
@@ -89,11 +89,12 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
 
 /* ── Startup Screen ── */
 #startup{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+
 #startup-inner{display:flex;flex-direction:column;align-items:center;gap:20px;width:300px;}
-#startup-logo{display:flex;align-items:center;gap:12px;margin-bottom:4px;}
-#startup-logo-icon{font-size:2.8rem;filter:drop-shadow(0 0 20px rgba(245,197,24,.5));}
-#startup-title{font-family:'Rajdhani',sans-serif;color:var(--gold);font-size:2.4rem;font-weight:700;letter-spacing:6px;}
-#startup-sub{color:var(--muted);font-size:12px;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-top:-8px;}
+
+#startup-crown{font-size:3.2rem;filter:drop-shadow(0 0 20px rgba(245,197,24,.7));animation:crownFloat 3s ease-in-out infinite;}
+@keyframes crownFloat{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-8px) rotate(2deg);}}
+#startup-sub{color:var(--muted);font-size:11px;letter-spacing:3px;text-transform:uppercase;text-align:center;margin-top:-6px;font-family:'Nunito',sans-serif;font-weight:700;}
 #startup-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);margin:2px 0;}
 
 .s-card{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;cursor:pointer;transition:all 0.18s;width:100%;}
@@ -101,8 +102,8 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
 .s-card:active{transform:scale(0.98);}
 .s-card-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;}
 .s-card-text{display:flex;flex-direction:column;gap:3px;flex:1;}
-.s-card-title{color:var(--text);font-size:1rem;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;}
-.s-card-sub{color:var(--muted);font-size:11px;}
+.s-card-title{color:var(--text);font-size:1rem;font-weight:800;font-family:'Nunito',sans-serif;letter-spacing:.3px;}
+.s-card-sub{color:var(--muted);font-size:11px;font-family:'Nunito',sans-serif;font-weight:600;line-height:1.4;}
 .s-card-arrow{color:rgba(255,255,255,.2);font-size:16px;flex-shrink:0;}
 .s-card-shine{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.03) 0%,transparent 60%);pointer-events:none;}
 
@@ -204,8 +205,8 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
 <div id="startup">
   <div id="startup-inner">
     <div id="startup-logo">
-      <div id="startup-logo-icon">🎲</div>
-      <div id="startup-title">LUDO</div>
+      
+      <div id="startup-crown">👑</div>
     </div>
     <div id="startup-sub">Online Multiplayer</div>
     <div id="startup-divider"></div>
@@ -914,6 +915,15 @@ async function onHumanRoll(){
   });
 }
 
+// Smart auto-move: agar genuinely koi choice nahi toh auto move
+function shouldAutoMove(mv, v){
+  if(mv.length === 0) return false;
+  if(mv.length === 1) return true;
+  const destinations = mv.map(t => t.step === 0 ? 1 : t.step + v);
+  const allSame = destinations.every(d => d === destinations[0]);
+  return allSame;
+}
+
 async function afterRoll(pid,v){
   const mv=movable(pid,v);
   if(mv.length===0){
@@ -922,7 +932,7 @@ async function afterRoll(pid,v){
     await doNextTurn(false);
     return;
   }
-  if(mv.length===1){
+  if(shouldAutoMove(mv, v)){
     await doMove(pid,mv[0].tid,v);
   } else {
     G.waiting=true;
@@ -947,7 +957,7 @@ async function doMove(pid,tid,v){
   const tok=tokOf(pid,tid);
   let bonus=false;
 
-  // ── 3 SIX RULE: check BEFORE moving ──
+  // ── 3 SIX RULE ──
   if(v===6){
     G.sixes=(G.sixes||0)+1;
     if(G.sixes>=3){
@@ -959,9 +969,14 @@ async function doMove(pid,tid,v){
       await doNextTurn(false);
       return;
     }
-    bonus=true; // 6 → extra turn
+    bonus=true;
   } else {
     G.sixes=0;
+  }
+
+  // Stretch: sirf overshoot block
+  if(tok.step>=STEP_STRETCH_START){
+    if(tok.step+v>STEP_DONE) return;
   }
 
   // Move token out of home
@@ -974,8 +989,6 @@ async function doMove(pid,tid,v){
   // ── HOME REACHED ──
   if(tok.step>=STEP_DONE){
     tok.step=STEP_DONE;renderTokens();await rafDelay(300);
-    showToast("🏠 Token reached home! Bonus turn! 🎉");
-    bonus=true; // reaching home = extra turn
     if(toksOf(pid).every(t=>t.step>=STEP_DONE)){
       if(!G.placements.includes(pid)) G.placements.push(pid);
       renderTokens();
@@ -985,37 +998,64 @@ async function doMove(pid,tid,v){
           G.placements.push(remaining[0].id);
         G.over=true;await pushGameState();endGame();return;
       }
+      // Sabki tokens ghar — no bonus
+      bonus=false;
+    } else {
+      // Ek token ghar pahunchi — bonus turn
+      showToast("🏠 Token reached home! Bonus turn! 🎉");
+      bonus=true;
     }
   }
 
-  // ── KILL CHECK (only main path, non-safe cells) ──
-  if(tok.step>=1&&tok.step<=STEP_MAIN_END){
-    const cell=getCell(pid,tok.step);
-    if(cell){
-      const ck=`${cell[0]}-${cell[1]}`;
-      if(!SAFE.has(ck)){
-        const enemies=G.tokens.filter(o=>{
-          if(o.pid===pid||o.step===0||o.step>=STEP_DONE) return false;
-          const oc=getCell(o.pid,o.step);
-          return oc&&`${oc[0]}-${oc[1]}`===ck;
-        });
-        const byPlayer={};
-        enemies.forEach(e=>{byPlayer[e.pid]=(byPlayer[e.pid]||0)+1;});
-        let killed=false;
-        for(const epid in byPlayer){
-          if(byPlayer[epid]===1){ // only lone tokens get captured; pairs are safe
-            const victim=enemies.find(e=>e.pid==epid);
-            await sendHomeFast(victim);
-            killed=true;
-          }
-        }
-        if(killed){
-          bonus=true;  // kill = extra turn
-          G.sixes=0;   // reset six counter on kill
-          showToast("⚔️ Captured! Bonus turn! 🔥");
-        }
+  // ── CAPTURE LOGIC ──
+  // Rule: Jo move kare uski token check hoti hai.
+  // Move ke baad us player ki 1 token bachi + koi enemy = pit
+  // 2+ apni bachi = safe
+  let captured=false;
+
+  async function checkAndPit(cellKey, movingPid){
+    const ownOnCell=G.tokens.filter(o=>{
+      if(o.pid!==movingPid||o.step===0||o.step>=STEP_DONE) return false;
+      const oc=getCell(o.pid,o.step);
+      return oc&&`${oc[0]}-${oc[1]}`===cellKey;
+    });
+    const enemiesOnCell=G.tokens.filter(o=>{
+      if(o.pid===movingPid||o.step===0||o.step>=STEP_DONE) return false;
+      const oc=getCell(o.pid,o.step);
+      return oc&&`${oc[0]}-${oc[1]}`===cellKey;
+    });
+    // Apni 2+ tokens = safe block
+    if(ownOnCell.length>=2) return;
+    // Apni 1 token + enemy = enemy pit hogi
+    if(ownOnCell.length===1&&enemiesOnCell.length>=1){
+      await sendHomeFast(enemiesOnCell[0]); // ✅ enemy ghar jaegi
+      captured=true;
+      G.sixes=0;
+    }
+  }
+
+  // 1. Prev cell check (jahan se token aayi — kya protection hati?)
+  if(tok.step>=2&&tok.step<=STEP_MAIN_END+1){
+    const prevStep=tok.step-v;
+    if(prevStep>=1&&prevStep<=STEP_MAIN_END){
+      const prevCell=getCell(pid,prevStep);
+      if(prevCell&&!SAFE.has(`${prevCell[0]}-${prevCell[1]}`)){
+        await checkAndPit(`${prevCell[0]}-${prevCell[1]}`,pid);
       }
     }
+  }
+
+  // 2. Current cell check (jahan token aayi)
+  if(tok.step>=1&&tok.step<=STEP_MAIN_END){
+    const cell=getCell(pid,tok.step);
+    if(cell&&!SAFE.has(`${cell[0]}-${cell[1]}`)){
+      await checkAndPit(`${cell[0]}-${cell[1]}`,pid);
+    }
+  }
+
+  if(captured){
+    bonus=true;
+    showToast("⚔️ Captured! Bonus turn! 🔥");
   }
 
   renderTokens();
