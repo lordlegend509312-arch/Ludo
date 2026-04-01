@@ -15,15 +15,15 @@
 *{box-sizing:border-box;margin:0;padding:0;user-select:none !important;-webkit-user-select:none !important;-webkit-touch-callout:none !important;}
 body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;font-family:'Inter',sans-serif;touch-action:manipulation;overflow:hidden;}
 #game-wrap{display:inline-flex;flex-direction:column;align-items:stretch;gap:6px;}
-/* STEP 5: Grid-based player panel */
-#players-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:6px;width:100%;}
-.prow{display:flex;justify-content:space-between;align-items:flex-end;}
-.prow.bottom{align-items:flex-start;}
-.pcol{display:flex;flex-direction:column;gap:5px;}
+/* Ludo King style player panel — YOU always at bottom */
+#players-grid{display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:auto auto;gap:4px 6px;width:100%;align-items:center;}
+/* top-left opponent */
+.pcol{display:flex;flex-direction:column;gap:4px;}
 .pcol.left{align-items:flex-start;}
 .pcol.right{align-items:flex-end;}
+.pcol.center-you{align-items:center;grid-column:1/span 3;}
 .plabel{font-size:10px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;transition:color 0.3s;padding:0 4px;font-family:'Rajdhani',sans-serif;}
-.pbox{position:relative;display:flex;align-items:center;justify-content:center;width:80px;height:76px;border-radius:12px;}
+.pbox{position:relative;display:flex;align-items:center;justify-content:center;width:70px;height:68px;border-radius:12px;}
 .pbox-bg{position:absolute;inset:0;background:var(--surface);border-radius:12px;border:1.5px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,.6);transition:border-color 0.25s,box-shadow 0.25s;}
 .pbox-shine{position:absolute;inset:1px;border-radius:11px;background:linear-gradient(150deg,rgba(255,255,255,.04) 0%,transparent 55%);pointer-events:none;}
 .pbox-dice{position:relative;z-index:3;width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#4a4a5a,#2e2e3e);border:1.5px solid #1a1a28;box-shadow:inset 0 2px 4px rgba(255,255,255,.12),0 2px 8px rgba(0,0,0,.4);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
@@ -31,9 +31,9 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
 .pbox-dice-val{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;color:var(--gold);font-family:'Rajdhani',sans-serif;letter-spacing:1px;min-height:14px;text-align:center;white-space:nowrap;}
 
 #board-wrap{position:relative;display:inline-block;}
-/* STEP 2: Board rotation so YOU always face same side */
-#board{transition:transform 0.4s cubic-bezier(0.4,1,0.6,1);}
-#tokens-layer{transition:transform 0.4s cubic-bezier(0.4,1,0.6,1);}
+/* Board never rotates — Ludo King style: only colors change per perspective */
+#board{transition:none;}
+#tokens-layer{transition:none;}
 #board{--cell:min(5.8vw,5.4vh,40px);display:grid;grid-template-columns:repeat(15,var(--cell));grid-template-rows:repeat(15,var(--cell));gap:1px;background:#3a4a55;padding:5px;border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.05),0 8px 48px rgba(0,0,0,.8);}
 .lc{display:flex;align-items:center;justify-content:center;}
 .star-svg{width:82%;height:82%;animation:starGlow 1.8s ease-in-out infinite alternate;}
@@ -294,12 +294,12 @@ const app=initializeApp(firebaseConfig);
 const db=getDatabase(app);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DESIGN: Sab players apne aap ko BLUE (top-right, slot 1) dekhte hain.
+// DESIGN: Ludo King style — board NEVER rotates.
+// Each player sees THEMSELVES as BLUE (via getDisplayColor perspective mapping).
+// UI layout: YOU always at bottom. Opponents at top.
 // Slot layout: 0=PINK(top-left), 1=BLUE(top-right), 2=GREEN(bot-right), 3=YELLOW(bot-left)
-// 2p: slots [1,3] — host=BLUE(1,top-right) vs joiner=YELLOW(3,bot-left) TRUE diagonal
-//   host boardRot=(3-1)*90=180° ✓  joiner boardRot=(3-3)*90=0° ✓
+// 2p: slots [1,3] — host=slot1, joiner=slot3
 // 3p: slots [0,1,3], 4p: [0,1,2,3]
-// POV rotates so each player sees themselves as BLUE (visual index 0).
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Board colors — fixed, never change in Firebase
@@ -417,9 +417,14 @@ function buildPerspective(myActual, activeSlots){
 }
 
 function applyPerspective(myActual, activeSlots){
-  VSLOT_MAP=buildPerspective(myActual, activeSlots);
-  VRSLOT_MAP={};
-  for(const[vis,act]of Object.entries(VSLOT_MAP)) VRSLOT_MAP[act]=parseInt(vis);
+  VSLOT_MAP={};VRSLOT_MAP={};
+  const n=activeSlots.length;
+  const myIdx=activeSlots.indexOf(myActual);
+  for(let i=0;i<n;i++){
+    const actual=activeSlots[(myIdx+i)%n];
+    VSLOT_MAP[i]=actual;
+    VRSLOT_MAP[actual]=i;
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -580,22 +585,22 @@ function startOnlineGame(room){
   Object.keys(_tokEls).forEach(k=>_removeTokEl(k));
   Object.keys(dAcc.rx).forEach(k=>{delete dAcc.rx[k];delete dAcc.ry[k];delete dAcc.last[k];delete dAcc.busy[k];});
 
+  // Force board rebuild every game start so perspective colors are always fresh
+  _boardBuilt=false;
+  _boardBuiltForSlot=-99;
   buildBoard();
   buildPlayers();
 
-  // STEP 2: Rotate board so YOU always face the same side
-  // MY_ACTUAL_SLOT: 0=PINK(top-left), 1=BLUE(top-right), 2=GREEN(bot-right), 3=YELLOW(bot-left)
-  // We want YELLOW(bot-left, slot 3) to be always "your side"
-  // rotation = (3 - MY_ACTUAL_SLOT) * 90
-  const boardRot=(3-MY_ACTUAL_SLOT)*90;
+  // Ludo King style: NO board rotation. Only colors change per perspective.
+  // Board stays fixed. Each player sees their color as BLUE via getDisplayColor().
   const boardEl=document.getElementById("board");
   const tokensEl=document.getElementById("tokens-layer");
-  if(boardEl){boardEl.style.transformOrigin="center center";boardEl.style.transform=`rotate(${boardRot}deg)`;}
-  // tokens-layer: same pivot, counter-rotate so tokens always face up
-  if(tokensEl){tokensEl.style.transformOrigin="center center";tokensEl.style.transform=`rotate(${-boardRot}deg)`;}
+  if(boardEl){boardEl.style.transform="none";boardEl.style.transformOrigin="";}
+  if(tokensEl){tokensEl.style.transform="none";tokensEl.style.transformOrigin="";}
 
-  // Wait for board to fully paint before rendering tokens
+  // Force cell size recalc AFTER board is in DOM — double RAF ensures layout is settled
   _cpx=0;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{_refreshCache();}));
 
   // Watch for opponent leaving
   roomRef=ref(db,`rooms/${ROOM_CODE}`);
@@ -726,6 +731,8 @@ function applyRemoteState(gs){
   if(typeof gs.turn!=="number"||gs.turn<0||gs.turn>3)return;
   if(!Array.isArray(gs.tokens))return;
 
+  // First load = G.tokens is still empty (game just started / rejoined)
+  const isFirstLoad=(G.tokens.length===0);
   const prevTokens=G.tokens.map(t=>({...t}));
   const wasTurn=G.turn;
   const wasRolled=G.rolled;
@@ -760,7 +767,8 @@ function applyRemoteState(gs){
   }
 
   // ── Animate token movement for remote players ──────────────────────────────
-  if(!_remoteAnimating&&prevTokens.length>0){
+  // On first load (prevTokens was empty), skip animation — just render final state
+  if(!_remoteAnimating&&prevTokens.length>0&&!isFirstLoad){
     const moved=[];
     for(const nt of G.tokens){
       // Skip tokens that host is processing locally (already animating)
@@ -1050,6 +1058,7 @@ function buildBoard(){
   if(_boardBuilt && _boardBuiltForSlot===MY_ACTUAL_SLOT)return;
   _boardBuilt=true;
   _boardBuiltForSlot=MY_ACTUAL_SLOT;
+  _cpx=0; // Always reset cell cache when board rebuilds — prevents stale sizing
   const el=document.getElementById("board");el.innerHTML="";
   // Perspective color map: actual slot color -> what THIS player sees
   // Ludo King style: your slot color becomes BLUE, clockwise: GREEN, YELLOW, RED(PINK)
@@ -1105,62 +1114,115 @@ function buildBoard(){
   }
 }
 
-// ── Build Players Panel ───────────────────────────────────────────────────────
-// STEP 5: Grid layout — YOU always at Row1 Col2 (top-right)
-// UI_POS[uiSlot]:
-//   uiSlot 0 = YOU       → row1, col2 (top-right)
-//   uiSlot 1 = next      → row2, col1 (bot-left)
-//   uiSlot 2 = opposite  → row2, col2 (bot-right)
-//   uiSlot 3 = prev      → row1, col1 (top-left)
-const UI_POS=[
-  {row:1,col:2,side:"right",pos:"top"},  // you
-  {row:2,col:1,side:"left", pos:"bot"},  // next
-  {row:2,col:2,side:"right",pos:"bot"},  // opposite
-  {row:1,col:1,side:"left", pos:"top"},  // prev
-];
+// ── Build Players Panel — Ludo King Style ─────────────────────────────────────
+// Layout: (viewing from YOUR perspective)
+//   Top row:    [opponent-left] [pause] [opponent-right]
+//   Bottom row: [      YOU (full width, centered)      ]
+//
+// Visual slots relative to YOU (uiSlot):
+//   0 = YOU       → bottom center span
+//   1 = next CW   → top right
+//   2 = opposite  → (hidden in 2p, or top center in 3-4p but we do top-left/right)
+//   3 = prev CCW  → top left
+//
+// For 2p: only YOU (bottom) + 1 opponent (top center spanning both cols)
+// For 3p: YOU (bottom) + 2 opponents (top-left, top-right)
+// For 4p: YOU (bottom) + 3 opponents (top-left, pause, top-right) — opposite shown in one of them
 function buildPlayers(){
   const grid=document.getElementById("players-grid");
   grid.innerHTML="";
 
-  // Place pause button spanning both cols between rows
-  // We inject it as a centered item in a special row
-  // Build pause button wrapper
-  const pauseWrap=document.createElement("div");
-  pauseWrap.style.cssText="grid-column:1/span 2;display:flex;justify-content:center;order:5;";
+  const activePlayers=PLAYERS.filter(p=>p.active);
+  const n=activePlayers.length;
+
+  // Pause button — always in top-center
   const pauseBtn=document.createElement("button");
   pauseBtn.id="btn-pause";pauseBtn.title="Leave";pauseBtn.innerHTML="🚪";pauseBtn.onclick=togglePause;
-  pauseWrap.appendChild(pauseBtn);
 
-  PLAYERS.forEach(p=>{
-    if(!p.active)return;
-    const uiSlot=(p.id-MY_ACTUAL_SLOT+4)%4;
-    const pos=UI_POS[uiSlot];
-    const panel=makePanel(p.id,pos.side,pos.pos);
-    panel.style.gridRow=pos.row;
-    panel.style.gridColumn=pos.col;
-    // order helps maintain DOM order
-    panel.style.order=(pos.row-1)*2+(pos.col-1);
+  // Figure out opponents in visual order (uiSlot 1,2,3 = next, opposite, prev)
+  const opponents=[];
+  for(let vis=1;vis<=3;vis++){
+    const actualSlot=VSLOT_MAP[vis];
+    if(actualSlot===undefined)continue;
+    const p=PLAYERS[actualSlot];
+    if(!p||!p.active)continue;
+    opponents.push({p,vis});
+  }
+
+  if(opponents.length===0){
+    // Solo / waiting — just show pause
+    const pauseWrap=document.createElement("div");
+    pauseWrap.style.cssText="grid-column:2;grid-row:1;display:flex;justify-content:center;";
+    pauseWrap.appendChild(pauseBtn);grid.appendChild(pauseWrap);
+  } else if(opponents.length===1){
+    // 2p: opponent at top spanning all 3 cols, pause inside their panel
+    const opp=opponents[0];
+    const panel=makePanel(opp.p.id,"center","top",true);
+    panel.style.cssText="grid-column:1/span 3;grid-row:1;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;";
+    // Insert pause btn in middle of their row
+    const pauseWrap=document.createElement("div");pauseWrap.style.cssText="display:flex;justify-content:center;flex-shrink:0;";pauseWrap.appendChild(pauseBtn);
+    panel.appendChild(pauseWrap);
     grid.appendChild(panel);
-  });
+  } else {
+    // 3-4p: top-left and top-right opponents, pause in center
+    const leftOpp=opponents[opponents.length-1]; // prev (uiSlot 3) = left
+    const rightOpp=opponents[0]; // next (uiSlot 1) = right
 
-  grid.appendChild(pauseWrap);
+    const leftPanel=makePanel(leftOpp.p.id,"left","top");
+    leftPanel.style.cssText="grid-column:1;grid-row:1;";
+    grid.appendChild(leftPanel);
+
+    const pauseWrap=document.createElement("div");
+    pauseWrap.style.cssText="grid-column:2;grid-row:1;display:flex;align-items:center;justify-content:center;";
+    pauseWrap.appendChild(pauseBtn);
+    grid.appendChild(pauseWrap);
+
+    const rightPanel=makePanel(rightOpp.p.id,"right","top");
+    rightPanel.style.cssText="grid-column:3;grid-row:1;";
+    grid.appendChild(rightPanel);
+
+    // If 4p, show opposite below the top row (visually in the center-ish area)
+    // We use the 2nd opponent slot
+    if(opponents.length>=2){
+      // Opposite (uiSlot 2) — show as small panel below pause in row1, or skip for simplicity
+      // In 4p Ludo King, opposite is shown at top center. We'll put them above pause.
+      const oppOpp=opponents.find(o=>o.vis===2);
+      if(oppOpp){
+        const oppPanel=makePanel(oppOpp.p.id,"center","top");
+        oppPanel.style.cssText="grid-column:2;grid-row:1;display:flex;flex-direction:column;align-items:center;gap:2px;";
+        // Replace pause wrap for this column — pause goes in oppPanel
+        const existingPauseWrap=grid.querySelector("div[style*='grid-column:2']");
+        if(existingPauseWrap)existingPauseWrap.remove();
+        oppPanel.appendChild(pauseBtn);
+        grid.appendChild(oppPanel);
+      }
+    }
+  }
+
+  // YOU — always at bottom spanning all 3 cols
+  const youPanel=makePanel(MY_ACTUAL_SLOT,"center","bot");
+  youPanel.style.cssText="grid-column:1/span 3;grid-row:2;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;";
+  grid.appendChild(youPanel);
 }
 
-function makePanel(pid,side,pos){
+function makePanel(pid,side,pos,isRow=false){
   const p=PLAYERS[pid];
-  const col=document.createElement("div");col.className=`pcol ${side}`;
-  const lbl=document.createElement("span");lbl.className="plabel";lbl.id=`lbl-${pid}`;
+  const col=document.createElement("div");
   const isYou=pid===MY_ACTUAL_SLOT;
   const dispColor=getDisplayColor(pid);
   const dispName=getDisplayName(pid);
+
+  const lbl=document.createElement("span");lbl.className="plabel";lbl.id=`lbl-${pid}`;
   lbl.textContent=`${dispName}${isYou?" (You)":""}`;
   lbl.style.color=dispColor;
-  if(isYou)lbl.style.fontWeight="800";
+  if(isYou){lbl.style.fontWeight="800";lbl.style.fontSize="11px";}
+
   const box=document.createElement("div");box.className="pbox";box.id=`pbox-${pid}`;
   box.style.cssText="justify-content:center;";
+
   const bg=document.createElement("div");bg.className="pbox-bg";bg.id=`pbg-${pid}`;
   const shine=document.createElement("div");shine.className="pbox-shine";bg.appendChild(shine);
-  // Dice only — no token
+
   const diceW=document.createElement("div");diceW.className="pbox-dice";diceW.id=`pdw-${pid}`;
   diceW.style.cssText="position:relative;display:flex;align-items:center;justify-content:center;width:60px;height:60px;flex-shrink:0;";
   const d3d=makeDice(pid);
@@ -1169,8 +1231,25 @@ function makePanel(pid,side,pos){
   const valLabel=document.createElement("div");valLabel.className="pbox-dice-val";valLabel.id=`dval-${pid}`;valLabel.textContent="";
   diceW.appendChild(valLabel);
   box.appendChild(bg);box.appendChild(diceW);
-  if(pos==="top"){col.appendChild(lbl);col.appendChild(box);}
-  else{col.appendChild(box);col.appendChild(lbl);}
+
+  // For row layout (2p opponent, YOU): dice box + label side by side
+  if(isRow||side==="center"){
+    col.style.display="flex";col.style.flexDirection="row";col.style.alignItems="center";col.style.gap="8px";
+    if(pos==="bot"){
+      // YOU: label on left of dice
+      col.appendChild(lbl);col.appendChild(box);
+    } else {
+      col.appendChild(box);col.appendChild(lbl);
+    }
+  } else if(side==="left"){
+    col.className="pcol left";
+    if(pos==="top"){col.appendChild(lbl);col.appendChild(box);}
+    else{col.appendChild(box);col.appendChild(lbl);}
+  } else {
+    col.className="pcol right";
+    if(pos==="top"){col.appendChild(lbl);col.appendChild(box);}
+    else{col.appendChild(box);col.appendChild(lbl);}
+  }
   return col;
 }
 
@@ -1206,7 +1285,10 @@ function refreshUI(){
     if(lbl)lbl.style.color=displayColor;
     if(box)box.style.outline=active?`2px solid ${displayColor}`:"none";
     const pdw=document.getElementById(`pdw-${p.id}`);
-    if(pdw){pdw.style.visibility=active?"visible":"hidden";}
+    if(pdw){
+      // Always show YOUR dice; show opponent dice only when it's their turn
+      pdw.style.visibility=(active||isMe)?"visible":"hidden";
+    }
     if(d3d){
       if(active&&isMe){d3d.classList.remove("inactive");d3d.classList.toggle("off",!(!G.rolled&&!G.over));}
       else if(active&&!isMe){d3d.classList.remove("inactive");d3d.classList.add("off");}
@@ -1305,8 +1387,10 @@ function _renderTokensNow(){
     if(tok.step===0){const[hr,hc]=SLOT_HOME_CORNER[tok.pid];const bp=baseCirclePx(hr,hc,tok.tid);px=bp.x;py=bp.y;scale=1.02;}
     else if(tok.step>=STEP_DONE){
       const centerRC=[7,7];const cxy=rcToXY(centerRC[0],centerRC[1]);const cp2=cellPx();const half=cp2*1.5;
-      const offsets={[C_PINK]:{dx:-half*0.60,dy:0},[C_BLUE]:{dx:0,dy:-half*0.60},[C_GREEN]:{dx:half*0.60,dy:0},[C_YELLOW]:{dx:0,dy:half*0.60}};
-      const off=offsets[SLOT_COLOR[tok.pid]]||{dx:0,dy:0};
+      // Use SLOT_COLOR[tok.pid] for position (board logic, never rotated) but map correctly
+      // Slot 0=PINK→left, 1=BLUE→top, 2=GREEN→right, 3=YELLOW→bottom (fixed board positions)
+      const slotOffsets={0:{dx:-half*0.60,dy:0},1:{dx:0,dy:-half*0.60},2:{dx:half*0.60,dy:0},3:{dx:0,dy:half*0.60}};
+      const off=slotOffsets[tok.pid]||{dx:0,dy:0};
       const doneOf=G.tokens.filter(t=>t.pid===tok.pid&&t.step>=STEP_DONE);
       const doneIdx=doneOf.findIndex(t=>t.tid===tok.tid);
       const spread=cp2*0.18;const angles=[Math.PI*1.25,Math.PI*0.75,Math.PI*1.75,Math.PI*0.25];
@@ -1321,8 +1405,8 @@ function _renderTokensNow(){
     const rW=BASE_W*scale;const rH=rW*(130/100);const tipOffset=rH*(122/130);
     const tx=px-rW/2;const ty=py-tipOffset;
     const els=_ensureTokEl(tok,color);const{wrap,shadow}=els;
-    // Only rebuild SVG if size changed significantly
-    if(Math.abs((els.lastW||0)-rW)>0.5){wrap.innerHTML=tokSVG(color,rW);els.lastW=rW;}
+    // Rebuild SVG if size OR color changed (color changes when perspective loads)
+    if(Math.abs((els.lastW||0)-rW)>0.5||els.lastColor!==color){wrap.innerHTML=tokSVG(color,rW);els.lastW=rW;els.lastColor=color;}
     wrap.style.transform=`translate(${tx}px,${ty}px)`;
     const shadowW=rW*0.60,shadowH=rW*0.16;const sx=px-shadowW/2,sy=py-shadowH/2+1;
     shadow.style.transform=`translate(${sx}px,${sy}px)`;shadow.style.width=`${shadowW}px`;shadow.style.height=`${shadowH}px`;
