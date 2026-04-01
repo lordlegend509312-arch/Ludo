@@ -13,8 +13,8 @@
   --text:#f0f0ff;--muted:rgba(240,240,255,.4);
 }
 *{box-sizing:border-box;margin:0;padding:0;user-select:none !important;-webkit-user-select:none !important;-webkit-touch-callout:none !important;}
-body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;font-family:'Inter',sans-serif;touch-action:manipulation;overflow:hidden;}
-#game-wrap{display:inline-flex;flex-direction:column;align-items:stretch;gap:6px;}
+body{min-height:100vh;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:0;font-family:'Inter',sans-serif;touch-action:manipulation;overflow:hidden;}
+#game-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:6px;}
 /* Ludo King style player panel — YOU always at bottom */
 #players-grid{display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:auto auto;gap:4px 6px;width:100%;align-items:center;}
 /* top-left opponent */
@@ -30,7 +30,10 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
 /* dice value label */
 .pbox-dice-val{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;color:var(--gold);font-family:'Rajdhani',sans-serif;letter-spacing:1px;min-height:14px;text-align:center;white-space:nowrap;}
 
-#board-wrap{position:relative;display:inline-block;}
+#board-wrap{position:relative;display:flex;align-items:center;justify-content:center;}
+/* Dice container inside board-wrap — Ludo King style */
+#dice-container{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;}
+.player-dice-pos{position:absolute;display:flex;align-items:center;justify-content:center;pointer-events:auto;}
 /* Board never rotates — Ludo King style: only colors change per perspective */
 #board{transition:none;}
 #tokens-layer{transition:none;}
@@ -243,6 +246,7 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
   <div id="board-wrap">
     <div id="board"></div>
     <div id="tokens-layer"></div>
+    <div id="dice-container"></div>
   </div>
   <div id="status-row"></div>
 </div>
@@ -532,8 +536,7 @@ function renderWaitingPlayers(activeSlots,slots){
     const sd=slots?slots[s]:null;const isJoined=sd&&sd.joined;if(isJoined)joined++;
     const div=document.createElement("div");
     div.className="wait-player"+(isJoined?" joined":"");
-    const color=SLOT_COLOR[s];
-    div.innerHTML=`<div class="wait-dot${isJoined?" on":""}" style="${isJoined?`background:${color};box-shadow:0 0 8px ${color};`:""}"></div>
+    div.innerHTML=`<div class="wait-dot${isJoined?" on":""}" style="${isJoined?`background:var(--green);box-shadow:0 0 8px var(--green);`:""}"></div>
       <span class="wait-name${isJoined?" on":""}">Player ${s+1}${s===MY_ACTUAL_SLOT?" (You)":""}</span>
       <span class="wait-badge">${isJoined?"Ready":""}</span>`;
     list.appendChild(div);
@@ -1203,7 +1206,45 @@ function buildPlayers(){
   const youPanel=makePanel(MY_ACTUAL_SLOT,"center","bot");
   youPanel.style.cssText="grid-column:1/span 3;grid-row:2;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;";
   grid.appendChild(youPanel);
+
+  // Build dice inside board (Ludo King style — 4 corners of board)
+  buildDiceInBoard();
 }
+
+// ── Build Dice Inside Board — Ludo King style ──────────────────────────────────
+// Dice float at the 4 quadrant corners of the board (over home zones)
+// Positions map to board slots: slot0=top-left, slot1=top-right, slot2=bot-right, slot3=bot-left
+function buildDiceInBoard(){
+  const container=document.getElementById("dice-container");
+  if(!container)return;
+  container.innerHTML="";
+  // Board slot -> corner position (percentage of board-wrap)
+  // slot0=PINK=top-left, slot1=BLUE=top-right, slot2=GREEN=bot-right, slot3=YELLOW=bot-left
+  const DICE_CORNERS={
+    0:{top:"6%",left:"6%"},
+    1:{top:"6%",right:"6%"},
+    2:{bottom:"6%",right:"6%"},
+    3:{bottom:"6%",left:"6%"}
+  };
+  PLAYERS.forEach(p=>{
+    if(!p.active)return;
+    const pos=DICE_CORNERS[p.id];if(!pos)return;
+    const wrapper=document.createElement("div");
+    wrapper.className="player-dice-pos";
+    wrapper.id=`pdw-${p.id}`;
+    // Position
+    let css="position:absolute;display:flex;flex-direction:column;align-items:center;gap:2px;";
+    Object.entries(pos).forEach(([k,v])=>{css+=`${k}:${v};`;});
+    wrapper.style.cssText=css;
+    const d3d=makeDice(p.id);
+    d3d.style.cssText="width:38px;height:38px;position:relative;";
+    wrapper.appendChild(d3d);
+    const valLabel=document.createElement("div");valLabel.className="pbox-dice-val";valLabel.id=`dval-${p.id}`;valLabel.textContent="";
+    wrapper.appendChild(valLabel);
+    container.appendChild(wrapper);
+  });
+}
+
 
 function makePanel(pid,side,pos,isRow=false){
   const p=PLAYERS[pid];
@@ -1217,26 +1258,19 @@ function makePanel(pid,side,pos,isRow=false){
   lbl.style.color=dispColor;
   if(isYou){lbl.style.fontWeight="800";lbl.style.fontSize="11px";}
 
+  // pbox still needed for active-turn outline indicator and pbox-msg chat bubbles
   const box=document.createElement("div");box.className="pbox";box.id=`pbox-${pid}`;
-  box.style.cssText="justify-content:center;";
-
+  box.style.cssText="justify-content:center;width:36px;height:36px;";
   const bg=document.createElement("div");bg.className="pbox-bg";bg.id=`pbg-${pid}`;
   const shine=document.createElement("div");shine.className="pbox-shine";bg.appendChild(shine);
+  // Color dot inside pbox
+  const dot=document.createElement("div");dot.style.cssText=`width:16px;height:16px;border-radius:50%;background:${dispColor};position:relative;z-index:2;`;
+  box.appendChild(bg);box.appendChild(dot);
 
-  const diceW=document.createElement("div");diceW.className="pbox-dice";diceW.id=`pdw-${pid}`;
-  diceW.style.cssText="position:relative;display:flex;align-items:center;justify-content:center;width:60px;height:60px;flex-shrink:0;";
-  const d3d=makeDice(pid);
-  d3d.style.cssText="width:38px;height:38px;position:relative;";
-  diceW.appendChild(d3d);
-  const valLabel=document.createElement("div");valLabel.className="pbox-dice-val";valLabel.id=`dval-${pid}`;valLabel.textContent="";
-  diceW.appendChild(valLabel);
-  box.appendChild(bg);box.appendChild(diceW);
-
-  // For row layout (2p opponent, YOU): dice box + label side by side
+  // For row layout (2p opponent, YOU): box + label side by side
   if(isRow||side==="center"){
     col.style.display="flex";col.style.flexDirection="row";col.style.alignItems="center";col.style.gap="8px";
     if(pos==="bot"){
-      // YOU: label on left of dice
       col.appendChild(lbl);col.appendChild(box);
     } else {
       col.appendChild(box);col.appendChild(lbl);
