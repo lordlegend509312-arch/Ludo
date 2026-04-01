@@ -15,28 +15,32 @@
 *{box-sizing:border-box;margin:0;padding:0;user-select:none !important;-webkit-user-select:none !important;-webkit-touch-callout:none !important;}
 body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;font-family:'Inter',sans-serif;touch-action:manipulation;overflow:hidden;}
 #game-wrap{display:inline-flex;flex-direction:column;align-items:stretch;gap:6px;}
+/* STEP 5: Grid-based player panel */
+#players-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:6px;width:100%;}
 .prow{display:flex;justify-content:space-between;align-items:flex-end;}
 .prow.bottom{align-items:flex-start;}
 .pcol{display:flex;flex-direction:column;gap:5px;}
 .pcol.left{align-items:flex-start;}
 .pcol.right{align-items:flex-end;}
 .plabel{font-size:10px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;transition:color 0.3s;padding:0 4px;font-family:'Rajdhani',sans-serif;}
-.pbox{position:relative;display:flex;align-items:center;width:145px;height:76px;border-radius:12px;}
+.pbox{position:relative;display:flex;align-items:center;justify-content:center;width:80px;height:76px;border-radius:12px;}
 .pbox-bg{position:absolute;inset:0;background:var(--surface);border-radius:12px;border:1.5px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,.6);transition:border-color 0.25s,box-shadow 0.25s;}
 .pbox-shine{position:absolute;inset:1px;border-radius:11px;background:linear-gradient(150deg,rgba(255,255,255,.04) 0%,transparent 55%);pointer-events:none;}
-.pbox-tok{position:relative;z-index:3;width:46px;display:flex;justify-content:center;align-items:center;flex-shrink:0;}
-.pbox-dice{position:relative;z-index:3;width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#4a4a5a,#2e2e3e);border:1.5px solid #1a1a28;box-shadow:inset 0 2px 4px rgba(255,255,255,.12),0 2px 8px rgba(0,0,0,.4);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.pbox-dice{position:relative;z-index:3;width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#4a4a5a,#2e2e3e);border:1.5px solid #1a1a28;box-shadow:inset 0 2px 4px rgba(255,255,255,.12),0 2px 8px rgba(0,0,0,.4);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 /* dice value label */
 .pbox-dice-val{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;color:var(--gold);font-family:'Rajdhani',sans-serif;letter-spacing:1px;min-height:14px;text-align:center;white-space:nowrap;}
 
-#board-wrap{position:relative;}
+#board-wrap{position:relative;display:inline-block;}
+/* STEP 2: Board rotation so YOU always face same side */
+#board{transition:transform 0.4s cubic-bezier(0.4,1,0.6,1);}
+#tokens-layer{transition:transform 0.4s cubic-bezier(0.4,1,0.6,1);}
 #board{--cell:min(5.8vw,5.4vh,40px);display:grid;grid-template-columns:repeat(15,var(--cell));grid-template-rows:repeat(15,var(--cell));gap:1px;background:#3a4a55;padding:5px;border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.05),0 8px 48px rgba(0,0,0,.8);}
 .lc{display:flex;align-items:center;justify-content:center;}
 .star-svg{width:82%;height:82%;animation:starGlow 1.8s ease-in-out infinite alternate;}
 @keyframes starGlow{from{filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px rgba(255,255,255,.7));}to{filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 10px rgba(255,255,200,1)) drop-shadow(0 0 16px rgba(255,255,150,.8));}}
 
 /* Dice 3D */
-.dice-3d{width:38px;height:38px;position:relative;perspective:170px;cursor:pointer;}
+.dice-3d{width:38px;height:38px;position:relative;perspective:170px;cursor:pointer;flex-shrink:0;}
 .dice-3d.off{cursor:default;pointer-events:none;}
 .dice-3d.inactive{opacity:1;pointer-events:none;filter:grayscale(0.6);}
 .dice-cube{width:38px;height:38px;transform-style:preserve-3d;will-change:transform;}
@@ -45,7 +49,7 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
 .ddot{width:7px;height:7px;background:radial-gradient(circle at 33% 28%,#4a3878,#0e0c22);border-radius:50%;position:absolute;box-shadow:0 1px 2px rgba(0,0,0,.55);z-index:3;}
 
 /* Tokens */
-#tokens-layer{position:absolute;top:0;left:0;pointer-events:none;}
+#tokens-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
 .tok{position:absolute;pointer-events:none;will-change:transform;left:0;top:0;}
 .tok.movable{pointer-events:auto;cursor:pointer;}
 .tok.movable::after{content:"";position:absolute;inset:-10px;border-radius:50%;}
@@ -232,13 +236,14 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
 
 <!-- Game -->
 <div id="game-wrap">
-  <div class="prow" id="top-row" style="align-items:center;"></div>
+  <div id="players-grid">
+    <!-- filled dynamically by buildPlayers() -->
+  </div>
   <div id="turn-banner"></div>
   <div id="board-wrap">
     <div id="board"></div>
     <div id="tokens-layer"></div>
   </div>
-  <div class="prow bottom" id="bot-row"></div>
   <div id="status-row"></div>
 </div>
 
@@ -290,10 +295,10 @@ const db=getDatabase(app);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN: Sab players apne aap ko BLUE (top-right, slot 1) dekhte hain.
-// Host = actual slot 0 (PINK). Baki slots: 1=BLUE,2=GREEN,3=YELLOW
-// Har player ka SLOT_MAP rotate karta hai taaki WO khud visual slot 1 (BLUE) pe ho.
-// BLUE = top-right corner = first to move entry = sabse visible position
-// Host ko pehli baari milti hai kyunki host = actual slot 0 = PINK = first in turn order
+// Slot layout: 0=PINK(top-left), 1=BLUE(top-right), 2=GREEN(bot-right), 3=YELLOW(bot-left)
+// 2p: slots [1,3] — Blue(top-right) vs Yellow(bot-left) diagonal
+// 3p: slots [0,1,3], 4p: [0,1,2,3]
+// Host = first activeSlot. POV rotates so each player sees themselves as BLUE.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Board colors — fixed, never change in Firebase
@@ -301,16 +306,14 @@ const C_PINK="#FF2D78", C_BLUE="#00AEEF", C_GREEN="#00C853", C_YELLOW="#FFD600";
 // Slot→Color mapping (actual slots, never rotated)
 const SLOT_COLOR=[C_PINK, C_BLUE, C_GREEN, C_YELLOW];
 
-// Display colors per perspective: (slot - mySlot + 4) % 4
-// 0=Blue(you), 1=Green, 2=Yellow, 3=Red
-const DISPLAY_COLOR_ORDER=[C_BLUE, C_GREEN, C_YELLOW, "#FF4444"];
-const RED_DISPLAY="#FF4444";
+// STEP 6: Colors use actual slot — 0=PINK, 1=BLUE, 2=GREEN, 3=YELLOW
+// No POV color rotation math
 function getDisplayColor(pid){
-  if(MY_ACTUAL_SLOT===-1)return SLOT_COLOR[pid];
-  const idx=(pid-MY_ACTUAL_SLOT+4)%4;
-  return DISPLAY_COLOR_ORDER[idx];
+  return SLOT_COLOR[pid]||SLOT_COLOR[0];
 }
 function getDisplayName(pid){
+  // Name from perspective: you=Blue, others clockwise
+  if(MY_ACTUAL_SLOT===-1)return["Pink","Blue","Green","Yellow"][pid];
   const idx=(pid-MY_ACTUAL_SLOT+4)%4;
   return["Blue","Green","Yellow","Red"][idx];
 }
@@ -444,12 +447,14 @@ async function createRoom(){
   errEl.textContent="";_hostStarting=false;
   let code;try{code=await genUniqueCode();}catch(e){errEl.textContent="Error: "+e.message;return;}
   ROOM_CODE=code;NUM_PLAYERS=selectedPlayers;isHost=true;
-  // HOST = actual slot 0 (PINK). Others get slots in join order.
-  // Active slots: 2p=[0,2] (criss-cross diagonal), 3p=[0,1,2], 4p=[0,1,2,3]
-  const activeSlots=NUM_PLAYERS===2?[0,2]:Array.from({length:NUM_PLAYERS},(_,i)=>i);
-  MY_ACTUAL_SLOT=0; // host always slot 0 = PINK (first turn)
+  // Slot layout: 0=PINK(top-left), 1=BLUE(top-right), 2=GREEN(bot-right), 3=YELLOW(bot-left)
+  // STEP 7: 2p uses slots [3,1] — host=YELLOW(3), joiner=BLUE(1)
+  // Board rotation (3-slot)*90 makes each player always face same corner
+  // 3p: [0,1,3], 4p: [0,1,2,3]
+  const activeSlots=NUM_PLAYERS===2?[3,1]:NUM_PLAYERS===3?[0,1,3]:Array.from({length:4},(_,i)=>i);
+  MY_ACTUAL_SLOT=activeSlots[0]; // host gets first slot
   const slots={};
-  activeSlots.forEach(s=>{slots[s]={joined:s===0,uid:s===0?MY_UID:null};});
+  activeSlots.forEach((s,i)=>{slots[s]={joined:i===0,uid:i===0?MY_UID:null};});
   try{
     await set(ref(db,`rooms/${code}`),{numPlayers:NUM_PLAYERS,activeSlots,slots,status:"waiting",createdAt:Date.now()});
     fbOnDisconnect(ref(db,`rooms/${code}/status`)).set("abandoned");
@@ -542,10 +547,10 @@ async function hostStartGame(){
   for(let i=0;i<4;i++){
     players.push({id:i,color:SLOT_COLOR[i],active:activePids.includes(i)});
   }
-  // Host (slot 0 = PINK) goes first
+  // Host (first active slot) goes first
   const tokens=[];
   activePids.forEach(pid=>{for(let tid=0;tid<4;tid++)tokens.push({pid,tid,step:0});});
-  const gameState={players,tokens,turn:0,diceVal:null,rolled:false,waiting:false,over:false,sixes:0,placements:[],lastAction:Date.now()};
+  const gameState={players,tokens,turn:activePids[0],diceVal:null,rolled:false,waiting:false,over:false,sixes:0,placements:[],lastAction:Date.now()};
   await update(ref(db,`rooms/${ROOM_CODE}`),{status:"started",game:gameState});
 }
 
@@ -572,6 +577,18 @@ function startOnlineGame(room){
 
   buildBoard();
   buildPlayers();
+
+  // STEP 2: Rotate board so YOU always face the same side
+  // MY_ACTUAL_SLOT: 0=PINK(top-left), 1=BLUE(top-right), 2=GREEN(bot-right), 3=YELLOW(bot-left)
+  // We want YELLOW(bot-left, slot 3) to be always "your side"
+  // rotation = (3 - MY_ACTUAL_SLOT) * 90
+  const boardRot=(3-MY_ACTUAL_SLOT)*90;
+  const boardEl=document.getElementById("board");
+  const tokensEl=document.getElementById("tokens-layer");
+  if(boardEl){boardEl.style.transformOrigin="center center";boardEl.style.transform=`rotate(${boardRot}deg)`;}
+  // tokens-layer: same pivot, counter-rotate so tokens always face up
+  if(tokensEl){tokensEl.style.transformOrigin="center center";tokensEl.style.transform=`rotate(${-boardRot}deg)`;}
+
   // Wait for board to fully paint before rendering tokens
   _cpx=0;
 
@@ -914,9 +931,14 @@ async function doNextTurn(same){
   if(!same){
     const still=PLAYERS.filter(p=>p.active&&!toksOf(p.id).every(t=>t.step>=STEP_DONE));
     if(still.length===0){G.over=true;PLAYERS.filter(p=>p.active).forEach(p=>{if(!G.placements.includes(p.id))G.placements.push(p.id);});await pushGameState();endGame();return;}
+    // Cycle through active slots only (supports non-contiguous slots like [1,3])
+    const activeIds=PLAYERS.filter(p=>p.active).map(p=>p.id).sort((a,b)=>a-b);
     let tries=0;
-    do{G.turn=(G.turn+1)%4;tries++;}
-    while(tries<8&&(!PLAYERS[G.turn]||!PLAYERS[G.turn].active||toksOf(G.turn).every(t=>t.step>=STEP_DONE)));
+    do{
+      const curIdx=activeIds.indexOf(G.turn);
+      G.turn=activeIds[(curIdx+1)%activeIds.length];
+      tries++;
+    }while(tries<8&&(!PLAYERS[G.turn]||!PLAYERS[G.turn].active||toksOf(G.turn).every(t=>t.step>=STEP_DONE)));
   }
   _myTurn=(G.turn===MY_ACTUAL_SLOT);
   G.lastAction=Date.now();
@@ -1028,40 +1050,45 @@ function buildBoard(){
 }
 
 // ── Build Players Panel ───────────────────────────────────────────────────────
-// Visual layout:
-//   visual 0 = top-left    (PINK)
-//   visual 1 = top-right   (BLUE) ← YOU always here
-//   visual 2 = bot-right   (GREEN)
-//   visual 3 = bot-left    (YELLOW)
+// STEP 5: Grid layout — YOU always at Row1 Col2 (top-right)
+// UI_POS[uiSlot]:
+//   uiSlot 0 = YOU       → row1, col2 (top-right)
+//   uiSlot 1 = next      → row2, col1 (bot-left)
+//   uiSlot 2 = opposite  → row2, col2 (bot-right)
+//   uiSlot 3 = prev      → row1, col1 (top-left)
+const UI_POS=[
+  {row:1,col:2,side:"right",pos:"top"},  // you
+  {row:2,col:1,side:"left", pos:"bot"},  // next
+  {row:2,col:2,side:"right",pos:"bot"},  // opposite
+  {row:1,col:1,side:"left", pos:"top"},  // prev
+];
 function buildPlayers(){
-  const top=document.getElementById("top-row");
-  const bot=document.getElementById("bot-row");
-  top.innerHTML="";bot.innerHTML="";
+  const grid=document.getElementById("players-grid");
+  grid.innerHTML="";
 
-  // visual 0 = top-left actual slot
-  const v0act=VSLOT_MAP[0]; // top-left
-  const v1act=VSLOT_MAP[1]; // top-right = YOU (BLUE visually)
-  const v2act=VSLOT_MAP[2]; // bot-right
-  const v3act=VSLOT_MAP[3]; // bot-left
-
-  if(v0act!==undefined&&PLAYERS[v0act]&&PLAYERS[v0act].active)top.appendChild(makePanel(v0act,"left","top"));
-  else top.appendChild(makePlaceholder("left"));
-
+  // Place pause button spanning both cols between rows
+  // We inject it as a centered item in a special row
+  // Build pause button wrapper
+  const pauseWrap=document.createElement("div");
+  pauseWrap.style.cssText="grid-column:1/span 2;display:flex;justify-content:center;order:5;";
   const pauseBtn=document.createElement("button");
   pauseBtn.id="btn-pause";pauseBtn.title="Leave";pauseBtn.innerHTML="🚪";pauseBtn.onclick=togglePause;
-  top.appendChild(pauseBtn);
+  pauseWrap.appendChild(pauseBtn);
 
-  if(v1act!==undefined&&PLAYERS[v1act]&&PLAYERS[v1act].active)top.appendChild(makePanel(v1act,"right","top"));
-  else top.appendChild(makePlaceholder("right"));
+  PLAYERS.forEach(p=>{
+    if(!p.active)return;
+    const uiSlot=(p.id-MY_ACTUAL_SLOT+4)%4;
+    const pos=UI_POS[uiSlot];
+    const panel=makePanel(p.id,pos.side,pos.pos);
+    panel.style.gridRow=pos.row;
+    panel.style.gridColumn=pos.col;
+    // order helps maintain DOM order
+    panel.style.order=(pos.row-1)*2+(pos.col-1);
+    grid.appendChild(panel);
+  });
 
-  if(v3act!==undefined&&PLAYERS[v3act]&&PLAYERS[v3act].active)bot.appendChild(makePanel(v3act,"left","bot"));
-  else bot.appendChild(makePlaceholder("left"));
-
-  if(v2act!==undefined&&PLAYERS[v2act]&&PLAYERS[v2act].active)bot.appendChild(makePanel(v2act,"right","bot"));
-  else bot.appendChild(makePlaceholder("right"));
+  grid.appendChild(pauseWrap);
 }
-
-function makePlaceholder(side){const col=document.createElement("div");col.className=`pcol ${side}`;col.style.cssText="width:145px;height:78px;visibility:hidden;";return col;}
 
 function makePanel(pid,side,pos){
   const p=PLAYERS[pid];
@@ -1074,21 +1101,18 @@ function makePanel(pid,side,pos){
   lbl.style.color=dispColor;
   if(isYou)lbl.style.fontWeight="800";
   const box=document.createElement("div");box.className="pbox";box.id=`pbox-${pid}`;
-  box.style.flexDirection=side==="left"?"row":"row-reverse";
+  box.style.cssText="justify-content:center;";
   const bg=document.createElement("div");bg.className="pbox-bg";bg.id=`pbg-${pid}`;
   const shine=document.createElement("div");shine.className="pbox-shine";bg.appendChild(shine);
-  const tokW=document.createElement("div");tokW.className="pbox-tok";
-  tokW.style[side==="left"?"marginLeft":"marginRight"]="4px";
-  tokW.innerHTML=tokSVG(dispColor,36);
+  // Dice only — no token
   const diceW=document.createElement("div");diceW.className="pbox-dice";diceW.id=`pdw-${pid}`;
-  diceW.style[side==="left"?"marginRight":"marginLeft"]="6px";
-  const d3d=makeDice(pid);d3d.style.cssText="width:52px;height:52px;";
+  diceW.style.cssText="position:relative;display:flex;align-items:center;justify-content:center;width:60px;height:60px;flex-shrink:0;";
+  const d3d=makeDice(pid);
+  d3d.style.cssText="width:38px;height:38px;position:relative;";
   diceW.appendChild(d3d);
-  // Dice value label below dice
   const valLabel=document.createElement("div");valLabel.className="pbox-dice-val";valLabel.id=`dval-${pid}`;valLabel.textContent="";
-  diceW.style.position="relative";
   diceW.appendChild(valLabel);
-  box.appendChild(bg);box.appendChild(tokW);box.appendChild(diceW);
+  box.appendChild(bg);box.appendChild(diceW);
   if(pos==="top"){col.appendChild(lbl);col.appendChild(box);}
   else{col.appendChild(box);col.appendChild(lbl);}
   return col;
@@ -1174,23 +1198,24 @@ function _ensureTokEl(tok,color){
 }
 function _removeTokEl(key){if(_tokEls[key]){_tokEls[key].wrap.remove();_tokEls[key].shadow.remove();delete _tokEls[key];}}
 
-let _cpx=0,_ox=0,_oy=0;
+let _cpx=0;
+const GAP=1,PAD=5; // matches board CSS: padding:5px, gap:1px
 function _refreshCache(){
-  const b=document.getElementById("board"),l=document.getElementById("tokens-layer");
-  if(b){const s=parseFloat(getComputedStyle(b).getPropertyValue("--cell"));if(s>0)_cpx=s;}
-  if(!_cpx)_cpx=Math.min(window.innerWidth*0.058,window.innerHeight*0.054,40);
-  if(b&&l){const br=b.getBoundingClientRect(),lr=l.getBoundingClientRect();_ox=br.left-lr.left;_oy=br.top-lr.top;}
+  const b=document.getElementById("board");
+  if(b){
+    // CSS --cell uses min() which parseFloat can't read — derive from actual board width
+    const bw=b.getBoundingClientRect().width;
+    if(bw>0)_cpx=Math.round((bw-2*PAD-14*GAP)/15*10)/10;
+  }
+  if(!_cpx||_cpx<1)_cpx=Math.min(window.innerWidth*0.058,window.innerHeight*0.054,40);
 }
-function cellPx(){return _cpx||Math.min(window.innerWidth*0.058,window.innerHeight*0.054,40);}
-function boardOffset(){return{x:_ox,y:_oy};}
-const GAP=1,PAD=6;
-function rcToXY(r,c){const cp=cellPx();const off=boardOffset();return{x:off.x+PAD+c*(cp+GAP)+cp/2,y:off.y+PAD+r*(cp+GAP)+cp/2};}
+function cellPx(){if(!_cpx)_refreshCache();return _cpx||Math.min(window.innerWidth*0.058,window.innerHeight*0.054,40);}
+// No DOM rect — offset is always 0,0 because tokens-layer overlays board exactly
+function rcToXY(r,c){const cp=cellPx();return{x:PAD+c*(cp+GAP)+cp/2,y:PAD+r*(cp+GAP)+cp/2};}
 function baseCirclePx(homeR,homeC,slotIdx){
-  const layer=document.getElementById("tokens-layer");
-  const el=document.querySelector(`[data-slot="${homeR},${homeC},${slotIdx}"]`);
-  if(el&&layer){const eR=el.getBoundingClientRect();const lR=layer.getBoundingClientRect();return{x:eR.left-lR.left+eR.width/2,y:eR.top-lR.top+eR.height/2};}
-  const cp=cellPx();const off=boardOffset();
-  const zoneX=off.x+PAD+homeC*(cp+GAP);const zoneY=off.y+PAD+homeR*(cp+GAP);
+  // Pure math — no getBoundingClientRect
+  const cp=cellPx();
+  const zoneX=PAD+homeC*(cp+GAP);const zoneY=PAD+homeR*(cp+GAP);
   const zoneW=6*cp+5*GAP;const wbW=zoneW*0.74;const wbH=wbW;
   const wbX=zoneX+(zoneW-wbW)/2;const wbY=zoneY+(zoneW-wbH)/2;
   const pad=wbW*0.10;const gap=wbW*0.10;const cellW=(wbW-2*pad-gap)/2;
@@ -1482,7 +1507,7 @@ document.addEventListener("touchstart",e=>{if(e.touches.length>1)e.preventDefaul
 let _lastTap=0;document.addEventListener("touchend",e=>{const now=Date.now();if(now-_lastTap<300)e.preventDefault();_lastTap=now;},{passive:false});
 window.addEventListener("wheel",e=>{if(e.ctrlKey)e.preventDefault();},{passive:false});
 document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&["+","-","=","0"].includes(e.key))e.preventDefault();});
-let _resizeTimer;window.addEventListener("resize",()=>{clearTimeout(_resizeTimer);_resizeTimer=setTimeout(()=>{_cpx=0;renderTokens();},100);});
+let _resizeTimer;window.addEventListener("resize",()=>{clearTimeout(_resizeTimer);_resizeTimer=setTimeout(()=>{_cpx=0;_refreshCache();renderTokens();},150);});
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 buildBoard();
