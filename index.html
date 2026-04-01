@@ -296,9 +296,10 @@ const db=getDatabase(app);
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN: Sab players apne aap ko BLUE (top-right, slot 1) dekhte hain.
 // Slot layout: 0=PINK(top-left), 1=BLUE(top-right), 2=GREEN(bot-right), 3=YELLOW(bot-left)
-// 2p: slots [1,3] — Blue(top-right) vs Yellow(bot-left) diagonal
+// 2p: slots [1,3] — host=BLUE(1,top-right) vs joiner=YELLOW(3,bot-left) TRUE diagonal
+//   host boardRot=(3-1)*90=180° ✓  joiner boardRot=(3-3)*90=0° ✓
 // 3p: slots [0,1,3], 4p: [0,1,2,3]
-// Host = first activeSlot. POV rotates so each player sees themselves as BLUE.
+// POV rotates so each player sees themselves as BLUE (visual index 0).
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Board colors — fixed, never change in Firebase
@@ -306,16 +307,20 @@ const C_PINK="#FF2D78", C_BLUE="#00AEEF", C_GREEN="#00C853", C_YELLOW="#FFD600";
 // Slot→Color mapping (actual slots, never rotated)
 const SLOT_COLOR=[C_PINK, C_BLUE, C_GREEN, C_YELLOW];
 
-// STEP 6: Colors use actual slot — 0=PINK, 1=BLUE, 2=GREEN, 3=YELLOW
-// No POV color rotation math
+// LUDO KING style: Every player sees THEMSELVES as BLUE (top-right).
+// Visual color order (clockwise from YOU): BLUE, GREEN, YELLOW, RED(PINK)
+const VISUAL_COLORS=[C_BLUE, C_GREEN, C_YELLOW, C_PINK];
+const VISUAL_NAMES=["Blue","Green","Yellow","Red"];
 function getDisplayColor(pid){
-  return SLOT_COLOR[pid]||SLOT_COLOR[0];
+  // perspective offset: your slot = visual index 0 = BLUE
+  if(MY_ACTUAL_SLOT===-1)return SLOT_COLOR[pid]||C_BLUE;
+  const idx=(pid-MY_ACTUAL_SLOT+4)%4;
+  return VISUAL_COLORS[idx];
 }
 function getDisplayName(pid){
-  // Name from perspective: you=Blue, others clockwise
-  if(MY_ACTUAL_SLOT===-1)return["Pink","Blue","Green","Yellow"][pid];
+  if(MY_ACTUAL_SLOT===-1)return["Blue","Green","Yellow","Red"][pid];
   const idx=(pid-MY_ACTUAL_SLOT+4)%4;
-  return["Blue","Green","Yellow","Red"][idx];
+  return VISUAL_NAMES[idx];
 }
 const DEF="#CFD8DC", BOARD_BG="#546E7A";
 
@@ -386,6 +391,7 @@ let MY_ACTUAL_SLOT=-1; // real Firebase slot (0=PINK/host, 1=BLUE, 2=GREEN, 3=YE
 let PLAYERS=[];
 let G={turn:0,diceVal:null,rolled:false,waiting:false,over:false,sixes:0,tokens:[],placements:[]};
 let _myTurn=false, _processingMove=false, _gameStarted=false, _hostStarting=false;
+let _nonHostSafetyTimer=null;
 let roomRef=null, gameRef=null, roomListener=null, gameListener=null;
 let _extraListeners=[]; // [{ref, unsub}] for actionReq, playerLeft, diceEvent
 
@@ -397,17 +403,16 @@ let VSLOT_MAP={};  // visualSlot -> actualSlot
 let VRSLOT_MAP={}; // actualSlot -> visualSlot
 
 function buildPerspective(myActual, activeSlots){
-  // Place myActual at visual 1 (BLUE). Others follow in clockwise order.
-  // Visual order: 1,2,3,0 (BLUE->GREEN->YELLOW->PINK, clockwise from top-right)
-  const visualOrder=[1,2,3,0];
+  // Place myActual at visual slot 0 (YOU). Others follow clockwise.
+  // Visual index 0=you(BLUE), 1=next(GREEN), 2=opposite(YELLOW), 3=prev(PINK)
+  // getDisplayColor/Name use (pid-MY_ACTUAL_SLOT+4)%4 which matches this directly.
   const map={};
   const n=activeSlots.length;
   const myIdx=activeSlots.indexOf(myActual);
   for(let i=0;i<n;i++){
     const actual=activeSlots[(myIdx+i)%n];
-    map[visualOrder[i]]=actual;
+    map[i]=actual;
   }
-  // Fill unused visual slots as undefined
   return map;
 }
 
@@ -448,10 +453,10 @@ async function createRoom(){
   let code;try{code=await genUniqueCode();}catch(e){errEl.textContent="Error: "+e.message;return;}
   ROOM_CODE=code;NUM_PLAYERS=selectedPlayers;isHost=true;
   // Slot layout: 0=PINK(top-left), 1=BLUE(top-right), 2=GREEN(bot-right), 3=YELLOW(bot-left)
-  // STEP 7: 2p uses slots [3,1] — host=YELLOW(3), joiner=BLUE(1)
-  // Board rotation (3-slot)*90 makes each player always face same corner
+  // 2p uses slots [1,3] — host=BLUE(1,top-right), joiner=YELLOW(3,bot-left) → true diagonal fight
+  // boardRot=(3-MY_ACTUAL_SLOT)*90: host(1)→180°, joiner(3)→0° ✓ both face their own side
   // 3p: [0,1,3], 4p: [0,1,2,3]
-  const activeSlots=NUM_PLAYERS===2?[3,1]:NUM_PLAYERS===3?[0,1,3]:Array.from({length:4},(_,i)=>i);
+  const activeSlots=NUM_PLAYERS===2?[1,3]:NUM_PLAYERS===3?[0,1,3]:Array.from({length:4},(_,i)=>i);
   MY_ACTUAL_SLOT=activeSlots[0]; // host gets first slot
   const slots={};
   activeSlots.forEach((s,i)=>{slots[s]={joined:i===0,uid:i===0?MY_UID:null};});
@@ -478,7 +483,7 @@ async function joinRoom(){
     if(room.slots){
       const myExisting=room.activeSlots.find(s=>room.slots[s]&&room.slots[s].uid===MY_UID);
       if(myExisting!==undefined){
-        MY_ACTUAL_SLOT=myExisting;ROOM_CODE=code;NUM_PLAYERS=room.numPlayers;isHost=(myExisting===0);_hostStarting=false;
+        MY_ACTUAL_SLOT=myExisting;ROOM_CODE=code;NUM_PLAYERS=room.numPlayers;isHost=(room.activeSlots[0]===myExisting);_hostStarting=false;
         await update(ref(db,`rooms/${code}/slots/${myExisting}`),{joined:true,uid:MY_UID});
         document.getElementById("screen-join").classList.remove("show");
         if(room.status==="started"&&room.game){_gameStarted=false;startOnlineGame(room);}
@@ -731,6 +736,11 @@ function applyRemoteState(gs){
   G.placements=gs.placements||[];G.tokens=gs.tokens||[];G.lastAction=gs.lastAction||Date.now();
   _myTurn=(G.turn===MY_ACTUAL_SLOT);
 
+  // Non-host: Firebase confirmed new state — safe to clear processing lock and safety timer
+  if(!isHost&&_processingMove){
+    clearTimeout(_nonHostSafetyTimer);_nonHostSafetyTimer=null;_processingMove=false;
+  }
+
   if(wasTurn!==G.turn){
     _processingMove=false;
     startTurnTimer(G.turn,gs.lastAction||Date.now());
@@ -764,14 +774,18 @@ function applyRemoteState(gs){
     }
     if(moved.length>0){
       _remoteAnimating=true;
-      G.tokens=G.tokens.map(t=>{
-        const m=moved.find(m=>m.tok.pid===t.pid&&m.tok.tid===t.tid);
-        return m?{...t,step:m.tok.step}:t;
-      });
+      // FIX: G.tokens stays at FINAL state — no rewind. We animate using detached copies
+      // so that any incoming Firebase update during animation never causes a flicker.
       renderTokens();
-      const finalTokens=gs.tokens;
+      const finalTokens=G.tokens.slice(); // snapshot of final state
       (async()=>{
-        try{for(const{tok,steps}of moved){const lt=G.tokens.find(t=>t.pid===tok.pid&&t.tid===tok.tid);if(lt)await animateMove(lt,steps);}}
+        try{
+          for(const{tok,steps}of moved){
+            // Work on a detached copy so G.tokens is never mutated back to old step
+            const animTok={...tok};
+            await animateMove(animTok,steps);
+          }
+        }
         catch(e){console.warn("remote anim:",e);}
         finally{G.tokens=finalTokens;_remoteAnimating=false;refreshUI();renderTokens();}
       })();
@@ -851,10 +865,17 @@ async function onHumanRoll(){
       try{await pushP;await afterRoll(MY_ACTUAL_SLOT,v);}catch(e){console.warn(e);}finally{_processingMove=false;}
     });
   } else {
-    const safetyTimer=setTimeout(()=>{if(_processingMove){_processingMove=false;showToast("Slow connection — try again");}},6000);
+    // Non-host: send roll request and keep _processingMove=true until Firebase confirms
+    // the roll (applyRemoteState will reset it on turn change or when rolled=true lands).
+    // Safety fallback only if no response at all within 7s.
+    const safetyTimer=setTimeout(()=>{
+      if(_processingMove){_processingMove=false;showToast("Slow connection — try again");}
+    },7000);
     try{await sendActionRequest({type:"roll"});}
-    catch(e){console.warn(e);_processingMove=false;}
-    finally{clearTimeout(safetyTimer);setTimeout(()=>{_processingMove=false;},500);}
+    catch(e){console.warn(e);_processingMove=false;clearTimeout(safetyTimer);}
+    // DO NOT reset _processingMove here — applyRemoteState handles it
+    // Store timer so applyRemoteState can clear it when state arrives
+    _nonHostSafetyTimer=safetyTimer;
   }
 }
 
@@ -885,10 +906,12 @@ async function onTokClick(pid,tid){
   _processingMove=true;
   if(isHost){G.waiting=false;try{await doMove(pid,tid,G.diceVal);}finally{_processingMove=false;}}
   else{
-    const st=setTimeout(()=>{if(_processingMove){_processingMove=false;showToast("Slow connection — try again");}},6000);
+    // Non-host: keep _processingMove=true until applyRemoteState confirms the move.
+    const st=setTimeout(()=>{if(_processingMove){_processingMove=false;showToast("Slow connection — try again");}},7000);
     try{await sendActionRequest({type:"move",pid,tid,diceVal:G.diceVal});}
-    catch(e){console.warn(e);_processingMove=false;}
-    finally{clearTimeout(st);setTimeout(()=>{_processingMove=false;},500);}
+    catch(e){console.warn(e);_processingMove=false;clearTimeout(st);}
+    _nonHostSafetyTimer=st;
+    // DO NOT reset _processingMove here — applyRemoteState handles it
   }
 }
 
@@ -903,10 +926,17 @@ async function doMove(pid,tid,v){
 
   let captured=false;
   async function checkAndPit(cellKey,movingPid,movingTid){
-    const own=G.tokens.filter(o=>{if(o.pid!==movingPid||o.step===0||o.step>=STEP_DONE)return false;const oc=getCell(o.pid,o.step);return oc&&`${oc[0]}-${oc[1]}`===cellKey;});
+    // own = allied tokens on this cell (excluding the moving token itself)
+    const own=G.tokens.filter(o=>{
+      if(o.pid!==movingPid||o.tid===movingTid||o.step===0||o.step>=STEP_DONE)return false;
+      const oc=getCell(o.pid,o.step);return oc&&`${oc[0]}-${oc[1]}`===cellKey;
+    });
     const enemies=G.tokens.filter(o=>{if(o.pid===movingPid||o.step===0||o.step>=STEP_DONE)return false;const oc=getCell(o.pid,o.step);return oc&&`${oc[0]}-${oc[1]}`===cellKey;});
-    if(enemies.length>=2)return;
-    if(own.length>=1&&enemies.length===1){await sendHomeFast(enemies[0]);captured=true;}
+    // Can't capture: 2+ enemies (blockade), or 0 enemies
+    if(enemies.length!==1)return;
+    // Can't capture onto a cell where we're stacking (2+ of our own already there)
+    if(own.length>=2)return;
+    await sendHomeFast(enemies[0]);captured=true;
   }
 
   if(tok.step>=STEP_DONE){tok.step=STEP_DONE;renderTokens();await rafDelay(150);
@@ -977,8 +1007,8 @@ function _resetLocalState(){
   G={turn:0,diceVal:null,rolled:false,waiting:false,over:true,sixes:0,tokens:[],placements:[]};
   PLAYERS=[];ROOM_CODE="";MY_ACTUAL_SLOT=-1;_gameStarted=false;_hostStarting=false;
   _processingMove=false;_myTurn=false;isHost=false;VSLOT_MAP={};VRSLOT_MAP={};
-  _lastPushedSig=null;clearTurnTimer();
-  _boardBuilt=false;_lastDiceEventTs=0;
+  _lastPushedSig=null;clearTurnTimer();clearTimeout(_nonHostSafetyTimer);_nonHostSafetyTimer=null;
+  _boardBuilt=false;_boardBuiltForSlot=-99;_lastDiceEventTs=0;
   const b=document.getElementById("reconnect-banner");if(b)b.style.display="none";
 }
 function cleanupListeners(){
@@ -1012,15 +1042,41 @@ function cancelLeave(){document.getElementById("pause-overlay").classList.remove
 async function confirmLeaveGame(){document.getElementById("pause-overlay").classList.remove("show");await leaveGame();}
 window.togglePause=togglePause;window.cancelLeave=cancelLeave;window.confirmLeaveGame=confirmLeaveGame;
 
-// ── Board (built once) ────────────────────────────────────────────────────────
+// ── Board ────────────────────────────────────────────────────────────────────
+// Rebuilt each game start so perspective colors apply correctly
 let _boardBuilt=false;
+let _boardBuiltForSlot=-99;
 function buildBoard(){
-  if(_boardBuilt)return;
+  if(_boardBuilt && _boardBuiltForSlot===MY_ACTUAL_SLOT)return;
   _boardBuilt=true;
+  _boardBuiltForSlot=MY_ACTUAL_SLOT;
   const el=document.getElementById("board");el.innerHTML="";
+  // Perspective color map: actual slot color -> what THIS player sees
+  // Ludo King style: your slot color becomes BLUE, clockwise: GREEN, YELLOW, RED(PINK)
+  // SLOT_COLOR order: [C_PINK(slot0), C_BLUE(slot1), C_GREEN(slot2), C_YELLOW(slot3)]
+  // MY_ACTUAL_SLOT tells us which slot we are. We map actual->display.
+  function _perspColor(actualColor){
+    if(MY_ACTUAL_SLOT===-1)return actualColor;
+    const actualSlot=SLOT_COLOR.indexOf(actualColor);
+    if(actualSlot===-1)return actualColor;
+    const visIdx=(actualSlot-MY_ACTUAL_SLOT+4)%4;
+    return VISUAL_COLORS[visIdx];
+  }
+  const PC_PINK=_perspColor(C_PINK);
+  const PC_BLUE=_perspColor(C_BLUE);
+  const PC_GREEN=_perspColor(C_GREEN);
+  const PC_YELLOW=_perspColor(C_YELLOW);
+  // Build perspective-mapped versions of board data
+  const pHomeZones=homeZones.map(h=>({...h,col:_perspColor(h.col)}));
+  const pSTAR_BG=Object.fromEntries(Object.entries(STAR_BG).map(([k,v])=>[k,_perspColor(v)]));
+  const pCORNERS=Object.fromEntries(Object.entries(CORNERS).map(([k,v])=>[k,_perspColor(v)]));
+  const pARROWS=Object.fromEntries(Object.entries(ARROWS).map(([k,v])=>([k,{...v,col:_perspColor(v.col)}])));
+  const pSTRETCH_KEYS=Object.fromEntries([[PC_PINK,STRETCH_KEYS[C_PINK]],[PC_BLUE,STRETCH_KEYS[C_BLUE]],[PC_GREEN,STRETCH_KEYS[C_GREEN]],[PC_YELLOW,STRETCH_KEYS[C_YELLOW]]]);
+  function pGetStretch(r,c){const k=`${r}-${c}`;for(const[col,s]of Object.entries(pSTRETCH_KEYS))if(s.has(k))return col;return null;}
+  function pInHome(r,c){for(const h of pHomeZones)if(r>=h.r0&&r<h.r0+6&&c>=h.c0&&c<h.c0+6)return h.col;return null;}
   for(let r=0;r<15;r++){
     for(let c=0;c<15;c++){
-      const k=`${r}-${c}`;const hc=inHome(r,c);
+      const k=`${r}-${c}`;const hc=pInHome(r,c);
       if(hc){
         const isRoot=homeZones.some(h=>h.r0===r&&h.c0===c);if(!isRoot)continue;
         const d=document.createElement("div");d.className="lc";
@@ -1036,14 +1092,14 @@ function buildBoard(){
         el.appendChild(d);continue;
       }
       if(inCenter(r,c)){
-        if(r===6&&c===6){const d=document.createElement("div");d.style.cssText=`grid-column:7/span 3;grid-row:7/span 3;overflow:hidden;`;d.innerHTML=`<svg viewBox="0 0 90 90" style="width:100%;height:100%;display:block;" preserveAspectRatio="none"><polygon points="45,45 0,0 90,0" fill="${C_BLUE}"/><polygon points="45,45 90,0 90,90" fill="${C_GREEN}"/><polygon points="45,45 90,90 0,90" fill="${C_YELLOW}"/><polygon points="45,45 0,90 0,0" fill="${C_PINK}"/></svg>`;el.appendChild(d);}
+        if(r===6&&c===6){const d=document.createElement("div");d.style.cssText=`grid-column:7/span 3;grid-row:7/span 3;overflow:hidden;`;d.innerHTML=`<svg viewBox="0 0 90 90" style="width:100%;height:100%;display:block;" preserveAspectRatio="none"><polygon points="45,45 0,0 90,0" fill="${PC_BLUE}"/><polygon points="45,45 90,0 90,90" fill="${PC_GREEN}"/><polygon points="45,45 90,90 0,90" fill="${PC_YELLOW}"/><polygon points="45,45 0,90 0,0" fill="${PC_PINK}"/></svg>`;el.appendChild(d);}
         continue;
       }
       const d=document.createElement("div");d.className="lc";d.style.cssText=`grid-column:${c+1};grid-row:${r+1};`;
-      if(COLOR_STARS.has(k)){const bg=STAR_BG[k]||DEF;d.style.background=lighten(bg);d.innerHTML=`<svg viewBox="0 0 24 24" style="width:82%;height:82%;" fill="none"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" stroke="${darken(bg)}" stroke-width="1.8" fill="${darken(bg)}" stroke-linejoin="round"/></svg>`;}
+      if(COLOR_STARS.has(k)){const bg=pSTAR_BG[k]||DEF;d.style.background=lighten(bg);d.innerHTML=`<svg viewBox="0 0 24 24" style="width:82%;height:82%;" fill="none"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" stroke="${darken(bg)}" stroke-width="1.8" fill="${darken(bg)}" stroke-linejoin="round"/></svg>`;}
       else if(GREY_STARS.has(k)){d.style.background=DEF;d.innerHTML=`<svg viewBox="0 0 24 24" class="star-svg" fill="none"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" stroke="white" stroke-width="1.8" fill="transparent" stroke-linejoin="round"/></svg>`;}
-      else if(CORNERS[k]){d.style.background=CORNERS[k];}
-      else{const sc=getStretch(r,c);if(sc){d.style.background=sc;}else if(ARROWS[k]){d.style.background=DEF;const arDir={up:"M9,22L9,11L4,11L12,1L20,11L15,11L15,22Z",down:"M9,2L9,13L4,13L12,23L20,13L15,13L15,2Z",right:"M2,9L13,9L13,4L23,12L13,20L13,15L2,15Z",left:"M22,9L11,9L11,4L1,12L11,20L11,15L22,15Z"};d.innerHTML=`<svg viewBox="0 0 24 24" style="width:82%;height:82%;"><path d="${arDir[ARROWS[k].dir]}" fill="${ARROWS[k].col}"/></svg>`;}else if(PATH.has(k)){d.style.background=DEF;}else{d.style.background=BOARD_BG;}}
+      else if(pCORNERS[k]){d.style.background=pCORNERS[k];}
+      else{const sc=pGetStretch(r,c);if(sc){d.style.background=sc;}else if(pARROWS[k]){d.style.background=DEF;const arDir={up:"M9,22L9,11L4,11L12,1L20,11L15,11L15,22Z",down:"M9,2L9,13L4,13L12,23L20,13L15,13L15,2Z",right:"M2,9L13,9L13,4L23,12L13,20L13,15L2,15Z",left:"M22,9L11,9L11,4L1,12L11,20L11,15L22,15Z"};d.innerHTML=`<svg viewBox="0 0 24 24" style="width:82%;height:82%;"><path d="${arDir[pARROWS[k].dir]}" fill="${pARROWS[k].col}"/></svg>`;}else if(PATH.has(k)){d.style.background=DEF;}else{d.style.background=BOARD_BG;}}
       el.appendChild(d);
     }
   }
@@ -1250,7 +1306,7 @@ function _renderTokensNow(){
     else if(tok.step>=STEP_DONE){
       const centerRC=[7,7];const cxy=rcToXY(centerRC[0],centerRC[1]);const cp2=cellPx();const half=cp2*1.5;
       const offsets={[C_PINK]:{dx:-half*0.60,dy:0},[C_BLUE]:{dx:0,dy:-half*0.60},[C_GREEN]:{dx:half*0.60,dy:0},[C_YELLOW]:{dx:0,dy:half*0.60}};
-      const off=offsets[color]||{dx:0,dy:0};
+      const off=offsets[SLOT_COLOR[tok.pid]]||{dx:0,dy:0};
       const doneOf=G.tokens.filter(t=>t.pid===tok.pid&&t.step>=STEP_DONE);
       const doneIdx=doneOf.findIndex(t=>t.tid===tok.tid);
       const spread=cp2*0.18;const angles=[Math.PI*1.25,Math.PI*0.75,Math.PI*1.75,Math.PI*0.25];
