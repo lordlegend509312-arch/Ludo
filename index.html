@@ -273,7 +273,7 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getDatabase,ref,set,get,update,onValue,off,remove,push,onDisconnect as fbOnDisconnect}
+import{getDatabase,ref,set,get,update,onValue,off,remove,push,onChildAdded,onDisconnect as fbOnDisconnect}
   from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig={
@@ -300,7 +300,32 @@ const db=getDatabase(app);
 const C_PINK="#FF2D78", C_BLUE="#00AEEF", C_GREEN="#00C853", C_YELLOW="#FFD600";
 // Slot→Color mapping (actual slots, never rotated)
 const SLOT_COLOR=[C_PINK, C_BLUE, C_GREEN, C_YELLOW];
+
+// Display colors per perspective: (slot - mySlot + 4) % 4
+// 0=Blue(you), 1=Green, 2=Yellow, 3=Red
+const DISPLAY_COLOR_ORDER=[C_BLUE, C_GREEN, C_YELLOW, "#FF4444"];
+const RED_DISPLAY="#FF4444";
+function getDisplayColor(pid){
+  if(MY_ACTUAL_SLOT===-1)return SLOT_COLOR[pid];
+  const idx=(pid-MY_ACTUAL_SLOT+4)%4;
+  return DISPLAY_COLOR_ORDER[idx];
+}
+function getDisplayName(pid){
+  const idx=(pid-MY_ACTUAL_SLOT+4)%4;
+  return["Blue","Green","Yellow","Red"][idx];
+}
 const DEF="#CFD8DC", BOARD_BG="#546E7A";
+
+// ── SLOT-BASED PATH LOGIC (never use color for logic) ────────────────────────
+// Slot 0=PINK(top-left), 1=BLUE(top-right), 2=GREEN(bot-right), 3=YELLOW(bot-left)
+const SLOT_ENTRY_CELL=[[6,1],[1,8],[8,13],[13,6]]; // entry cell per slot
+const SLOT_STRETCH=[
+  [[7,1],[7,2],[7,3],[7,4],[7,5],[7,6]],   // slot 0 PINK
+  [[1,7],[2,7],[3,7],[4,7],[5,7],[6,7]],   // slot 1 BLUE
+  [[7,13],[7,12],[7,11],[7,10],[7,9],[7,8]], // slot 2 GREEN
+  [[13,7],[12,7],[11,7],[10,7],[9,7],[8,7]] // slot 3 YELLOW
+];
+const SLOT_HOME_CORNER=[[0,0],[0,9],[9,9],[9,0]]; // [r,c] per slot
 const STEP_MAIN_END=51, STEP_STRETCH_START=52, STEP_DONE=57;
 
 const homeZones=[
@@ -339,24 +364,10 @@ const MAIN_PATH=[
   [7,0],[6,0]
 ];
 const PATH=new Set(MAIN_PATH.map(([r,c])=>`${r}-${c}`));
-
-// Entry index on MAIN_PATH for each color
-const ENTRY_CELL={[C_PINK]:[6,1],[C_BLUE]:[1,8],[C_GREEN]:[8,13],[C_YELLOW]:[13,6]};
-const ENTRY={};
-for(const[color,[er,ec]]of Object.entries(ENTRY_CELL)){
-  ENTRY[color]=MAIN_PATH.findIndex(([r,c])=>r===er&&c===ec);
-}
+const SLOT_ENTRY_IDX=SLOT_ENTRY_CELL.map(([er,ec])=>MAIN_PATH.findIndex(([r,c])=>r===er&&c===ec));
 
 const SAFE=new Set([...GREY_STARS,...COLOR_STARS]);
-Object.values(ENTRY_CELL).forEach(([r,c])=>SAFE.add(`${r}-${c}`));
-
-const STRETCH={
-  [C_PINK]:[[7,1],[7,2],[7,3],[7,4],[7,5],[7,6]],
-  [C_BLUE]:[[1,7],[2,7],[3,7],[4,7],[5,7],[6,7]],
-  [C_GREEN]:[[7,13],[7,12],[7,11],[7,10],[7,9],[7,8]],
-  [C_YELLOW]:[[13,7],[12,7],[11,7],[10,7],[9,7],[8,7]]
-};
-const HOME_CORNER={[C_PINK]:[0,0],[C_BLUE]:[0,9],[C_GREEN]:[9,9],[C_YELLOW]:[9,0]};
+SLOT_ENTRY_CELL.forEach(([r,c])=>SAFE.add(`${r}-${c}`));
 
 // ── UID & Session ─────────────────────────────────────────────────────────────
 function getMyUID(){
@@ -433,9 +444,9 @@ async function createRoom(){
   errEl.textContent="";_hostStarting=false;
   let code;try{code=await genUniqueCode();}catch(e){errEl.textContent="Error: "+e.message;return;}
   ROOM_CODE=code;NUM_PLAYERS=selectedPlayers;isHost=true;
-  // HOST = actual slot 0 (PINK). Others get slots 1,2,3 in join order.
-  // Active slots: 2p=[0,1], 3p=[0,1,2], 4p=[0,1,2,3]
-  const activeSlots=Array.from({length:NUM_PLAYERS},(_,i)=>i);
+  // HOST = actual slot 0 (PINK). Others get slots in join order.
+  // Active slots: 2p=[0,2] (criss-cross diagonal), 3p=[0,1,2], 4p=[0,1,2,3]
+  const activeSlots=NUM_PLAYERS===2?[0,2]:Array.from({length:NUM_PLAYERS},(_,i)=>i);
   MY_ACTUAL_SLOT=0; // host always slot 0 = PINK (first turn)
   const slots={};
   activeSlots.forEach(s=>{slots[s]={joined:s===0,uid:s===0?MY_UID:null};});
@@ -561,6 +572,8 @@ function startOnlineGame(room){
 
   buildBoard();
   buildPlayers();
+  // Wait for board to fully paint before rendering tokens
+  _cpx=0;
 
   // Watch for opponent leaving
   roomRef=ref(db,`rooms/${ROOM_CODE}`);
@@ -756,10 +769,10 @@ function applyRemoteState(gs){
 // ── Game Logic ────────────────────────────────────────────────────────────────
 function getCell(pid,step){
   if(step<=0||step>=STEP_DONE)return null;
-  const color=PLAYERS[pid].color;
-  const entry=ENTRY[color];
+  // SLOT-BASED: use pid (slot) directly, never color
+  const entry=SLOT_ENTRY_IDX[pid];
   if(step<=STEP_MAIN_END){const idx=(entry+step-1)%MAIN_PATH.length;return MAIN_PATH[idx];}
-  const si=step-STEP_STRETCH_START;const s=STRETCH[color];
+  const si=step-STEP_STRETCH_START;const s=SLOT_STRETCH[pid];
   return(s&&si>=0&&si<s.length)?s[si]:null;
 }
 const tokOf=(pid,tid)=>G.tokens.find(t=>t.pid===pid&&t.tid===tid);
@@ -914,14 +927,13 @@ async function doNextTurn(same){
 function endGame(){
   G.over=true;
   const medals=["🥇","🥈","🥉","4️⃣"];
-  const COLOR_NAMES={[C_PINK]:"Pink",[C_BLUE]:"Blue",[C_GREEN]:"Green",[C_YELLOW]:"Yellow"};
   const lines=G.placements.map((pid,i)=>{
-    const color=SLOT_COLOR[pid];const cname=COLOR_NAMES[color]||`P${pid+1}`;
+    const cname=getDisplayName(pid);
     const you=pid===MY_ACTUAL_SLOT?" (You)":"";
     return`${medals[i]||"  "} ${cname}${you}`;
   });
   const winner=G.placements[0];
-  const winColor=SLOT_COLOR[winner];const winName=COLOR_NAMES[winColor]||`P${winner+1}`;
+  const winName=getDisplayName(winner);
   document.getElementById("win-msg").textContent=winner===MY_ACTUAL_SLOT?"🎉 You Win!":`🎉 ${winName} Wins!`;
   document.getElementById("win-places").textContent=lines.join("\n");
   document.getElementById("win").classList.add("show");
@@ -1056,18 +1068,18 @@ function makePanel(pid,side,pos){
   const col=document.createElement("div");col.className=`pcol ${side}`;
   const lbl=document.createElement("span");lbl.className="plabel";lbl.id=`lbl-${pid}`;
   const isYou=pid===MY_ACTUAL_SLOT;
-  const COLOR_NAMES={[C_PINK]:"Pink",[C_BLUE]:"Blue",[C_GREEN]:"Green",[C_YELLOW]:"Yellow"};
-  const cname=COLOR_NAMES[p.color]||`P${pid+1}`;
-  // Label: show color name + (You) if self
-  lbl.textContent=`${cname}${isYou?" (You)":""}`;
-  if(isYou){lbl.style.color=p.color;lbl.style.fontWeight="800";}
+  const dispColor=getDisplayColor(pid);
+  const dispName=getDisplayName(pid);
+  lbl.textContent=`${dispName}${isYou?" (You)":""}`;
+  lbl.style.color=dispColor;
+  if(isYou)lbl.style.fontWeight="800";
   const box=document.createElement("div");box.className="pbox";box.id=`pbox-${pid}`;
   box.style.flexDirection=side==="left"?"row":"row-reverse";
   const bg=document.createElement("div");bg.className="pbox-bg";bg.id=`pbg-${pid}`;
   const shine=document.createElement("div");shine.className="pbox-shine";bg.appendChild(shine);
   const tokW=document.createElement("div");tokW.className="pbox-tok";
   tokW.style[side==="left"?"marginLeft":"marginRight"]="4px";
-  tokW.innerHTML=tokSVG(p.color,36);
+  tokW.innerHTML=tokSVG(dispColor,36);
   const diceW=document.createElement("div");diceW.className="pbox-dice";diceW.id=`pdw-${pid}`;
   diceW.style[side==="left"?"marginRight":"marginLeft"]="6px";
   const d3d=makeDice(pid);d3d.style.cssText="width:52px;height:52px;";
@@ -1091,7 +1103,6 @@ function showDiceVal(pid,val){
 
 function refreshUI(){
   const banner=document.getElementById("turn-banner");
-  const COLOR_NAMES={[C_PINK]:"Pink",[C_BLUE]:"Blue",[C_GREEN]:"Green",[C_YELLOW]:"Yellow"};
   if(banner){
     if(G.over){banner.textContent="";}
     else{
@@ -1100,9 +1111,9 @@ function refreshUI(){
         banner.textContent=G.rolled?(G.waiting?"Pick a token":"Your turn"):`Your turn — Roll!${timerStr}`;
         banner.style.color="#FFD600";
       } else {
-        const cname=tp?COLOR_NAMES[tp.color]||`P${G.turn+1}`:`P${G.turn+1}`;
+        const cname=getDisplayName(G.turn);
         banner.textContent=`${cname}'s turn${timerStr}`;
-        banner.style.color=tp?tp.color:"rgba(240,240,255,.4)";
+        banner.style.color=getDisplayColor(G.turn);
       }
     }
   }
@@ -1110,9 +1121,12 @@ function refreshUI(){
     const active=G.turn===p.id&&!G.over;const isMe=p.id===MY_ACTUAL_SLOT;
     const bg=document.getElementById(`pbg-${p.id}`);const lbl=document.getElementById(`lbl-${p.id}`);
     const box=document.getElementById(`pbox-${p.id}`);const d3d=document.getElementById(`d3d-${p.id}`);
-    if(bg)bg.style.borderColor=active?p.color:"#333";
-    if(lbl)lbl.style.color=active?p.color:"white";
-    if(box)box.style.outline=active?`2px solid ${p.color}`:"none";
+    const displayColor=getDisplayColor(p.id);
+    if(bg)bg.style.borderColor=active?displayColor:"var(--border)";
+    if(lbl)lbl.style.color=displayColor;
+    if(box)box.style.outline=active?`2px solid ${displayColor}`:"none";
+    const pdw=document.getElementById(`pdw-${p.id}`);
+    if(pdw){pdw.style.visibility=active?"visible":"hidden";}
     if(d3d){
       if(active&&isMe){d3d.classList.remove("inactive");d3d.classList.toggle("off",!(!G.rolled&&!G.over));}
       else if(active&&!isMe){d3d.classList.remove("inactive");d3d.classList.add("off");}
@@ -1184,7 +1198,12 @@ function baseCirclePx(homeR,homeC,slotIdx){
   return{x:wbX+pad+col*(cellW+gap)+cellW/2,y:wbY+pad+row*(cellW+gap)+cellW/2};
 }
 
+let _rafPending=false;
 function renderTokens(){
+  if(_rafPending)return;_rafPending=true;
+  requestAnimationFrame(()=>{_rafPending=false;_renderTokensNow();});
+}
+function _renderTokensNow(){
   _refreshCache();
   const cp=cellPx();
   const movSet=new Set();
@@ -1197,11 +1216,12 @@ function renderTokens(){
   const alive=new Set();
   G.tokens.forEach(tok=>{
     if(!PLAYERS[tok.pid])return;
-    const color=PLAYERS[tok.pid].color;
+    // Display color (perspective-based), actual slot color only for board logic
+    const color=getDisplayColor(tok.pid);
     const isMovable=movSet.has(`${tok.pid}-${tok.tid}`);
     const key=`${tok.pid}-${tok.tid}`;
     let px,py,scale=1,stackCount=1;
-    if(tok.step===0){const[hr,hc]=HOME_CORNER[color];const bp=baseCirclePx(hr,hc,tok.tid);px=bp.x;py=bp.y;scale=1.02;}
+    if(tok.step===0){const[hr,hc]=SLOT_HOME_CORNER[tok.pid];const bp=baseCirclePx(hr,hc,tok.tid);px=bp.x;py=bp.y;scale=1.02;}
     else if(tok.step>=STEP_DONE){
       const centerRC=[7,7];const cxy=rcToXY(centerRC[0],centerRC[1]);const cp2=cellPx();const half=cp2*1.5;
       const offsets={[C_PINK]:{dx:-half*0.60,dy:0},[C_BLUE]:{dx:0,dy:-half*0.60},[C_GREEN]:{dx:half*0.60,dy:0},[C_YELLOW]:{dx:0,dy:half*0.60}};
@@ -1348,7 +1368,7 @@ async function animateMove(tok,steps){
 }
 
 async function sendHomeFast(tok){
-  const color=PLAYERS[tok.pid].color;const[hr,hc]=HOME_CORNER[color];const cacheKey=`${tok.pid}-${tok.tid}`;
+  const color=getDisplayColor(tok.pid);const[hr,hc]=SLOT_HOME_CORNER[tok.pid];const cacheKey=`${tok.pid}-${tok.tid}`;
   const el=(_tokEls[cacheKey]||{}).wrap||null;const layer=document.getElementById("tokens-layer");
   if(el){
     const m=el.style.transform.match(/translate\(([^,]+),([^)]+)\)/);
@@ -1375,12 +1395,32 @@ function initChat(){
   if(!ROOM_CODE)return;
   chatRef=ref(db,`rooms/${ROOM_CODE}/chat`);
   const btn=document.getElementById("chat-btn");if(btn)btn.style.display="flex";
-  chatListener=onValue(chatRef,snap=>{
-    if(!snap.exists())return;
-    const msgs=Object.entries(snap.val()).map(([id,m])=>({id,...m})).sort((a,b)=>a.ts-b.ts);
-    renderChatMsgs(msgs);
-    if(!_chatOpen){const last=msgs[msgs.length-1];if(last&&last.uid!==MY_UID){_unreadCount++;updateBadge();showPboxMsg(last.pid,last.text);}}
+
+  // ✅ onChildAdded: fires once per existing msg on load, then once per new msg
+  // Game state listener is completely separate — no cross-contamination
+  let _firstLoad=true;
+  const _loadBuffer=[];
+  chatListener=onChildAdded(chatRef,snap=>{
+    const msg={id:snap.key,...snap.val()};
+    if(_firstLoad){
+      // Buffer existing messages, render all at once after a tick
+      _loadBuffer.push(msg);
+      clearTimeout(chatListener._flushTimer);
+      chatListener._flushTimer=setTimeout(()=>{
+        _firstLoad=false;
+        // Sort buffered msgs by ts then render
+        _loadBuffer.sort((a,b)=>a.ts-b.ts);
+        _loadBuffer.forEach(m=>_appendChatMsg(m,false));
+        _loadBuffer.length=0;
+      },200);
+    } else {
+      // New message: just append, no game re-render
+      requestAnimationFrame(()=>{
+        _appendChatMsg(msg,true);
+      });
+    }
   });
+
   document.getElementById("chat-btn").onclick=()=>toggleChat();
   document.getElementById("chat-close").onclick=()=>toggleChat(false);
   document.getElementById("chat-send").onclick=()=>sendChat();
@@ -1398,25 +1438,33 @@ async function sendChat(){
   const text=(inp.textContent||inp.innerText||"").trim();if(!text||!chatRef)return;
   inp.textContent="";inp.innerHTML="";inp.innerText="";
   const myPlayer=PLAYERS[MY_ACTUAL_SLOT];
-  try{await push(chatRef,{uid:MY_UID,pid:MY_ACTUAL_SLOT,sender:myPlayer?`${myPlayer.color==='#FF2D78'?'Pink':myPlayer.color==='#00AEEF'?'Blue':myPlayer.color==='#00C853'?'Green':'Yellow'}`:"?",text,ts:Date.now()});}
+  try{await push(chatRef,{uid:MY_UID,pid:MY_ACTUAL_SLOT,sender:getDisplayName(MY_ACTUAL_SLOT),text,ts:Date.now()});}
   catch(e){showToast("Failed to send!");}
 }
-let _lastRenderedMsgCount=0;
-function renderChatMsgs(msgArr){
+// ✅ Single message append — no full re-render, no game interference
+function _appendChatMsg(msg, isNew){
   const container=document.getElementById("chat-msgs");if(!container)return;
-  // Only append new messages (avoid full re-render)
-  const newMsgs=msgArr.slice(_lastRenderedMsgCount);
-  _lastRenderedMsgCount=msgArr.length;
   const wasAtBottom=container.scrollTop+container.clientHeight>=container.scrollHeight-20;
-  newMsgs.forEach(msg=>{
-    const isMe=msg.uid===MY_UID;const p=PLAYERS[msg.pid];const color=p?p.color:"#00AEEF";
-    const COLOR_NAMES={[C_PINK]:"Pink",[C_BLUE]:"Blue",[C_GREEN]:"Green",[C_YELLOW]:"Yellow"};
-    const senderName=p?COLOR_NAMES[p.color]||msg.sender:msg.sender;
-    const wrap=document.createElement("div");wrap.className=`chat-msg ${isMe?"mine":"theirs"}`;
-    wrap.innerHTML=`<div class="chat-msg-sender" style="color:${color}">${senderName}${isMe?" (You)":""}</div><div class="chat-bubble">${escHtml(msg.text).replace(/\n/g,"<br>")}</div><div class="chat-time">${new Date(msg.ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>`;
-    container.appendChild(wrap);
-  });
+  const isMe=msg.uid===MY_UID;
+  const p=PLAYERS[msg.pid];
+  const color=p?getDisplayColor(msg.pid):C_BLUE;
+  const senderName=p?getDisplayName(msg.pid):msg.sender;
+  // Build DOM nodes (no innerHTML on container)
+  const wrap=document.createElement("div");wrap.className=`chat-msg ${isMe?"mine":"theirs"}`;
+  const senderEl=document.createElement("div");senderEl.className="chat-msg-sender";
+  senderEl.style.color=color;senderEl.textContent=`${senderName}${isMe?" (You)":""}`;
+  const bubble=document.createElement("div");bubble.className="chat-bubble";
+  bubble.innerHTML=escHtml(msg.text).replace(/\n/g,"<br>");
+  const time=document.createElement("div");time.className="chat-time";
+  time.textContent=new Date(msg.ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  wrap.appendChild(senderEl);wrap.appendChild(bubble);wrap.appendChild(time);
+  container.appendChild(wrap);
   if(wasAtBottom||_chatOpen)container.scrollTop=container.scrollHeight;
+  // Notify only for new incoming messages
+  if(isNew&&!isMe){
+    if(!_chatOpen){_unreadCount++;updateBadge();}
+    showPboxMsg(msg.pid,msg.text);
+  }
 }
 function escHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function showPboxMsg(pid,text){
@@ -1426,7 +1474,7 @@ function showPboxMsg(pid,text){
   box.style.position="relative";box.appendChild(el);
   _pboxMsgTimers[pid]=setTimeout(()=>{if(el.parentNode)el.remove();},4000);
 }
-function stopChat(){if(chatListener&&chatRef){off(chatRef);chatListener=null;}const btn=document.getElementById("chat-btn");if(btn)btn.style.display="none";document.getElementById("chat-panel").classList.remove("open");_chatOpen=false;_unreadCount=0;_lastRenderedMsgCount=0;}
+function stopChat(){if(chatListener){try{chatListener();}catch(e){}chatListener=null;}chatRef=null;const btn=document.getElementById("chat-btn");if(btn)btn.style.display="none";const panel=document.getElementById("chat-panel");if(panel)panel.classList.remove("open");_chatOpen=false;_unreadCount=0;const msgs=document.getElementById("chat-msgs");if(msgs)msgs.innerHTML="";}
 
 // ── Anti-zoom & Resize ────────────────────────────────────────────────────────
 document.addEventListener("contextmenu",e=>e.preventDefault());
