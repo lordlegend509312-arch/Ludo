@@ -326,12 +326,12 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
     <div id="startup-crown">👑</div>
     <div id="startup-sub">Online Multiplayer</div>
     <div id="startup-divider"></div>
-    <div class="s-card" onclick="showCreate()">
+    <div class="s-card" id="card-create">
       <div class="s-card-icon" style="background:linear-gradient(135deg,#F5C518,#b8920f);">🏠</div>
       <div class="s-card-text"><div class="s-card-title">Create Room</div><div class="s-card-sub">Host a game and share the code</div></div>
       <div class="s-card-arrow">›</div><div class="s-card-shine"></div>
     </div>
-    <div class="s-card" onclick="showJoin()">
+    <div class="s-card" id="card-join">
       <div class="s-card-icon" style="background:linear-gradient(135deg,#00AEEF,#006fa8);">🔗</div>
       <div class="s-card-text"><div class="s-card-title">Join Room</div><div class="s-card-sub">Enter a 6-digit room code</div></div>
       <div class="s-card-arrow">›</div><div class="s-card-shine"></div>
@@ -604,13 +604,13 @@ function _fallbackCopy(text){
   try{const ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;opacity:0;top:0;left:0;";document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");ta.remove();showToast("✅ Code copied!");}catch(e){showToast("Code: "+text,4000);}
 }
 window.showCreate=showCreate;window.showJoin=showJoin;window.backToMain=backToMain;window.selectPlayers=selectPlayers;window.copyRoomCode=copyRoomCode;
-// Attach startup card listeners via JS too (belt+suspenders alongside inline onclick)
-document.addEventListener("DOMContentLoaded",()=>{
-  const cardCreate=document.querySelector(".s-card[onclick='showCreate()']");
-  const cardJoin=document.querySelector(".s-card[onclick='showJoin()']");
+// Attach startup card listeners directly (module scripts run after DOM is ready)
+{
+  const cardCreate=document.getElementById("card-create");
+  const cardJoin=document.getElementById("card-join");
   if(cardCreate)cardCreate.addEventListener("click",showCreate);
   if(cardJoin)cardJoin.addEventListener("click",showJoin);
-});
+}
 
 // ── Create Room ───────────────────────────────────────────────────────────────
 async function createRoom(){
