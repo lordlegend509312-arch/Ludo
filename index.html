@@ -422,6 +422,12 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
 </div>
 
 <script type="module">
+// Global module error safety net
+window.addEventListener("unhandledrejection",e=>{
+  console.error("Unhandled promise rejection:",e.reason);
+  const errEls=["create-err","join-err"];
+  for(const id of errEls){const el=document.getElementById(id);if(el&&el.closest(".show")){el.textContent="Unexpected error — check console";break;}}
+});
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getDatabase,ref,set,get,update,onValue,off,remove,push,onChildAdded,onDisconnect as fbOnDisconnect}
   from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -598,27 +604,46 @@ function _fallbackCopy(text){
   try{const ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;opacity:0;top:0;left:0;";document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");ta.remove();showToast("✅ Code copied!");}catch(e){showToast("Code: "+text,4000);}
 }
 window.showCreate=showCreate;window.showJoin=showJoin;window.backToMain=backToMain;window.selectPlayers=selectPlayers;window.copyRoomCode=copyRoomCode;
+// Attach startup card listeners via JS too (belt+suspenders alongside inline onclick)
+document.addEventListener("DOMContentLoaded",()=>{
+  const cardCreate=document.querySelector(".s-card[onclick='showCreate()']");
+  const cardJoin=document.querySelector(".s-card[onclick='showJoin()']");
+  if(cardCreate)cardCreate.addEventListener("click",showCreate);
+  if(cardJoin)cardJoin.addEventListener("click",showJoin);
+});
 
 // ── Create Room ───────────────────────────────────────────────────────────────
 async function createRoom(){
   const errEl=document.getElementById("create-err");
+  const btn=document.querySelector("#screen-create .action-btn:not(.secondary)");
   errEl.textContent="";_hostStarting=false;
-  let code;try{code=await genUniqueCode();}catch(e){errEl.textContent="Error: "+e.message;return;}
+  if(btn){btn.textContent="Creating...";btn.disabled=true;}
+  let code;
+  try{code=await genUniqueCode();}
+  catch(e){
+    errEl.textContent="Network error — check connection";
+    showToast("❌ "+e.message,3500);
+    if(btn){btn.textContent="Create Room";btn.disabled=false;}
+    return;
+  }
   ROOM_CODE=code;NUM_PLAYERS=selectedPlayers;isHost=true;
-  // Slot layout: 0=PINK(top-left), 1=BLUE(top-right), 2=GREEN(bot-right), 3=YELLOW(bot-left)
-  // 2p uses slots [1,3] — host=BLUE(1,top-right), joiner=YELLOW(3,bot-left) → true diagonal fight
-  // boardRot=(3-MY_ACTUAL_SLOT)*90: host(1)→180°, joiner(3)→0° ✓ both face their own side
-  // 3p: [0,1,3], 4p: [0,1,2,3]
-  const activeSlots=NUM_PLAYERS===2?[3,1]:NUM_PLAYERS===3?[3,0,1]:Array.from({length:4},(_,i)=>[(3+i)%4][0]);
-  MY_ACTUAL_SLOT=activeSlots[0]; // host gets slot 3 (bot-left = A position)
+  const activeSlots=NUM_PLAYERS===2?[3,1]:NUM_PLAYERS===3?[3,0,1]:[3,0,1,2];
+  MY_ACTUAL_SLOT=activeSlots[0];
   const slots={};
   activeSlots.forEach((s,i)=>{slots[s]={joined:i===0,uid:i===0?MY_UID:null};});
   try{
     await set(ref(db,`rooms/${code}`),{numPlayers:NUM_PLAYERS,activeSlots,slots,status:"waiting",createdAt:Date.now()});
     fbOnDisconnect(ref(db,`rooms/${code}/status`)).set("abandoned");
+    if(btn){btn.textContent="Create Room";btn.disabled=false;}
     document.getElementById("screen-create").classList.remove("show");
     showWaiting(code,activeSlots,slots);
-  }catch(e){errEl.textContent="Error: "+e.message;}
+  }catch(e){
+    ROOM_CODE="";isHost=false;MY_ACTUAL_SLOT=-1;
+    const msg=e.code==="PERMISSION_DENIED"?"Firebase permission denied — update DB rules":"Error: "+e.message;
+    errEl.textContent=msg;
+    showToast("❌ "+msg,4000);
+    if(btn){btn.textContent="Create Room";btn.disabled=false;}
+  }
 }
 window.createRoom=createRoom;
 
@@ -626,32 +651,52 @@ window.createRoom=createRoom;
 async function joinRoom(){
   const code=document.getElementById("join-input").value.trim().toUpperCase();
   const errEl=document.getElementById("join-err");
+  const btn=document.querySelector("#screen-join .action-btn:not(.secondary)");
   errEl.textContent="";
   if(code.length!==6){errEl.textContent="Please enter a 6-digit code!";return;}
+  if(btn){btn.textContent="Joining...";btn.disabled=true;}
   try{
     const snap=await get(ref(db,`rooms/${code}`));
-    if(!snap.exists()){errEl.textContent="Room not found!";return;}
+    if(!snap.exists()){
+      errEl.textContent="Room not found!";
+      if(btn){btn.textContent="Join Game";btn.disabled=false;}
+      return;
+    }
     const room=snap.val();
-    // Reconnect check
     if(room.slots){
       const myExisting=room.activeSlots.find(s=>room.slots[s]&&room.slots[s].uid===MY_UID);
       if(myExisting!==undefined){
         MY_ACTUAL_SLOT=myExisting;ROOM_CODE=code;NUM_PLAYERS=room.numPlayers;isHost=(room.activeSlots[0]===myExisting);_hostStarting=false;
         await update(ref(db,`rooms/${code}/slots/${myExisting}`),{joined:true,uid:MY_UID});
+        if(btn){btn.textContent="Join Game";btn.disabled=false;}
         document.getElementById("screen-join").classList.remove("show");
         if(room.status==="started"&&room.game){_gameStarted=false;startOnlineGame(room);}
         else showWaiting(code,room.activeSlots,room.slots);
         return;
       }
     }
-    if(room.status!=="waiting"){errEl.textContent="This room has already started!";return;}
+    if(room.status!=="waiting"){
+      errEl.textContent="This room has already started!";
+      if(btn){btn.textContent="Join Game";btn.disabled=false;}
+      return;
+    }
     const freeSlot=room.activeSlots.find(s=>!room.slots[s]||!room.slots[s].joined);
-    if(freeSlot===undefined){errEl.textContent="Room is full!";return;}
+    if(freeSlot===undefined){
+      errEl.textContent="Room is full!";
+      if(btn){btn.textContent="Join Game";btn.disabled=false;}
+      return;
+    }
     MY_ACTUAL_SLOT=freeSlot;ROOM_CODE=code;NUM_PLAYERS=room.numPlayers;isHost=false;_hostStarting=false;
     await update(ref(db,`rooms/${code}/slots/${freeSlot}`),{joined:true,uid:MY_UID});
+    if(btn){btn.textContent="Join Game";btn.disabled=false;}
     document.getElementById("screen-join").classList.remove("show");
     showWaiting(code,room.activeSlots,room.slots);
-  }catch(e){document.getElementById("join-err").textContent="Error: "+e.message;}
+  }catch(e){
+    const msg=e.code==="PERMISSION_DENIED"?"Firebase permission denied — update DB rules":"Error: "+e.message;
+    errEl.textContent=msg;
+    showToast("❌ "+msg,4000);
+    if(btn){btn.textContent="Join Game";btn.disabled=false;}
+  }
 }
 window.joinRoom=joinRoom;
 
