@@ -402,14 +402,14 @@ body{min-height:100vh;background:url('ludobg.png') center center / cover no-repe
 <!-- Secret Key+Lock Layer — shown only after game starts, behind board (z-index:1) -->
 <div id="secret-layer" style="display:none;">
 
-  <!-- Lock.png — top area, no pointer events, z-index behind board -->
-  <img id="secret-lock" src="Lock.png"
+  <!-- lock.png — top area, no pointer events, z-index behind board -->
+  <img id="secret-lock" src="lock.png"
     style="position:fixed;top:8%;left:29%;transform:translateX(-50%) rotate(-10deg);
            pointer-events:none;z-index:1;width:32px;height:32px;object-fit:contain;" />
 
   <!-- Key.png — bottom-center, draggable, z-index behind board -->
   <img id="secret-key" src="Key.png"
-    style="position:fixed;bottom:14%;left:34%;transform:translateX(-50%);
+    style="position:fixed;bottom:16.3%;left:35%;transform:translateX(-50%);
            pointer-events:auto;cursor:grab;touch-action:none;z-index:1;
            width:30px;height:48px;object-fit:contain;" />
 
@@ -2260,8 +2260,8 @@ function restartGame(){
       _keyFloating=false;_dragging=false;
       const k=keyEl();
       if(k){
-        k.style.top=''; k.style.bottom='14%';
-        k.style.left='34%'; k.style.transform='translateX(-50%)';
+        k.style.top=''; k.style.bottom='16.3%';
+        k.style.left='35%'; k.style.transform='translateX(-50%)';
         k.classList.remove('floating');
       }
       const l=lockEl();
@@ -2357,8 +2357,8 @@ function restartGame(){
       lockEl().classList.remove('unlocking');
       // Reset key back to original position
       const k=keyEl();
-      k.style.top=''; k.style.bottom='14%';
-      k.style.left='34%'; k.style.transform='translateX(-50%)';
+      k.style.top=''; k.style.bottom='16.3%';
+      k.style.left='35%'; k.style.transform='translateX(-50%)';
       k.classList.remove('floating');
       _keyFloating=false;
     },350);
