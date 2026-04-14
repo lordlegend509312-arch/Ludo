@@ -342,16 +342,16 @@ body{min-height:100vh;background:url('ludobg.png') center center / cover no-repe
 
 /* Secret Key float animation */
 @keyframes keyFloat{
-  0%,100%{filter:drop-shadow(0 0 6px rgba(245,197,24,0.5)) drop-shadow(0 4px 8px rgba(0,0,0,0.6));}
-  50%{filter:drop-shadow(0 0 14px rgba(245,197,24,0.9)) drop-shadow(0 12px 18px rgba(0,0,0,0.4));}
+  0%,100%{transform:translateX(-50%) translateY(0px);filter:drop-shadow(0 0 6px rgba(245,197,24,0.6)) drop-shadow(0 4px 10px rgba(0,0,0,0.7));}
+  50%{transform:translateX(-50%) translateY(-8px);filter:drop-shadow(0 0 16px rgba(245,197,24,1)) drop-shadow(0 14px 18px rgba(0,0,0,0.4));}
 }
 @keyframes keyGlow{
-  0%,100%{filter:drop-shadow(0 0 4px rgba(245,197,24,0.3));}
-  50%{filter:drop-shadow(0 0 18px rgba(245,197,24,1)) drop-shadow(0 0 30px rgba(245,197,24,0.5));}
+  0%,100%{filter:drop-shadow(0 0 4px rgba(245,197,24,0.4));}
+  50%{filter:drop-shadow(0 0 20px rgba(245,197,24,1)) drop-shadow(0 0 35px rgba(245,197,24,0.6));}
 }
 #secret-key.floating{
   animation:keyFloat 1.2s ease-in-out infinite;
-  cursor:grabbing;
+  cursor:grab;
 }
 #secret-lock.unlocking{
   animation:keyGlow 0.5s ease-out forwards;
@@ -399,12 +399,20 @@ body{min-height:100vh;background:url('ludobg.png') center center / cover no-repe
     </div>
   </div>
 </div>
-<!-- Secret Key+Lock Layer — shown only after game starts, behind board -->
-<div id="secret-layer" style="display:none;position:fixed;inset:0;pointer-events:none;z-index:1;">
-  <!-- Lock: top-left area of screen, small icon size -->
-  <img id="secret-lock" src="Lock.png" style="position:absolute;top:8%;left:28%;width:52px;height:52px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.7));" draggable="false"/>
-  <!-- Key: bottom-center of screen, small icon size -->
-  <img id="secret-key" src="Key.png" style="position:absolute;bottom:12%;left:50%;transform:translateX(-50%);width:44px;height:52px;object-fit:contain;pointer-events:auto;cursor:grab;touch-action:none;filter:drop-shadow(0 2px 8px rgba(245,197,24,0.5));" draggable="false"/>
+<!-- Secret Key+Lock Layer — shown only after game starts, behind board (z-index:1) -->
+<div id="secret-layer" style="display:none;">
+
+  <!-- Lock.png — top area, no pointer events, z-index behind board -->
+  <img id="secret-lock" src="Lock.png"
+    style="position:fixed;top:8%;left:29%;transform:translateX(-50%) rotate(-10deg);
+           pointer-events:none;z-index:1;width:32px;height:32px;object-fit:contain;" />
+
+  <!-- Key.png — bottom-center, draggable, z-index behind board -->
+  <img id="secret-key" src="Key.png"
+    style="position:fixed;bottom:14%;left:34%;transform:translateX(-50%);
+           pointer-events:auto;cursor:grab;touch-action:none;z-index:1;
+           width:30px;height:48px;object-fit:contain;" />
+
 </div>
 
 <!-- Secret Chamber Modal -->
@@ -2245,14 +2253,17 @@ function restartGame(){
   const keyEl=()=>document.getElementById('secret-key');
   const lockEl=()=>document.getElementById('secret-lock');
 
-  // Show the layer when game starts
   window._showSecretLayer=function(){
     const sl=document.getElementById('secret-layer');
     if(sl){
       sl.style.display='block';
-      _kx=0;_ky=0;_keyFloating=false;_dragging=false;
+      _keyFloating=false;_dragging=false;
       const k=keyEl();
-      if(k){k.style.transform='translateX(-50%) translate(0px,0px)';k.classList.remove('floating');}
+      if(k){
+        k.style.top=''; k.style.bottom='14%';
+        k.style.left='34%'; k.style.transform='translateX(-50%)';
+        k.classList.remove('floating');
+      }
       const l=lockEl();
       if(l) l.classList.remove('unlocking');
     }
@@ -2280,11 +2291,16 @@ function restartGame(){
     _dragging=true;
     const k=keyEl();
     k.style.cursor='grabbing';
-    k.classList.remove('floating'); // pause float anim while dragging
+    k.classList.remove('floating');
     const pt=e.touches?e.touches[0]:e;
-    // current rendered position = _kx,_ky (transform offset from CSS initial position)
-    _dragOffX=pt.clientX-_kx;
-    _dragOffY=pt.clientY-_ky;
+    // Switch to left/top absolute positioning for smooth drag
+    const rect=k.getBoundingClientRect();
+    k.style.bottom='';
+    k.style.left=rect.left+'px';
+    k.style.top=rect.top+'px';
+    k.style.transform='none';
+    _dragOffX=pt.clientX-rect.left;
+    _dragOffY=pt.clientY-rect.top;
     e.preventDefault();
     e.stopPropagation();
   }
@@ -2292,32 +2308,31 @@ function restartGame(){
   function onDragMove(e){
     if(!_dragging) return;
     const pt=e.touches?e.touches[0]:e;
-    _kx=pt.clientX-_dragOffX;
-    _ky=pt.clientY-_dragOffY;
-    keyEl().style.transform=`translateX(-50%) translate(${_kx}px,${_ky}px)`;
+    const k=keyEl();
+    k.style.left=(pt.clientX-_dragOffX)+'px';
+    k.style.top=(pt.clientY-_dragOffY)+'px';
     e.preventDefault();
   }
 
   function onDragEnd(e){
     if(!_dragging) return;
     _dragging=false;
-    keyEl().style.cursor='grab';
-    keyEl().classList.add('floating'); // resume float
+    const k=keyEl();
+    k.style.cursor='grab';
+    k.classList.add('floating');
 
-    // Get actual screen positions of lock and key using getBoundingClientRect
+    // Get actual screen positions using getBoundingClientRect
     const lockEl2=lockEl();
-    const keyEl2=keyEl();
-    if(!lockEl2||!keyEl2){e.preventDefault();return;}
+    if(!lockEl2){e.preventDefault();return;}
     const lr=lockEl2.getBoundingClientRect();
-    const kr=keyEl2.getBoundingClientRect();
+    const kr=k.getBoundingClientRect();
     const lockCX=lr.left+lr.width/2;
     const lockCY=lr.top+lr.height/2;
     const keyCX=kr.left+kr.width/2;
     const keyCY=kr.top+kr.height/2;
 
     const dist=Math.hypot(keyCX-lockCX, keyCY-lockCY);
-    const vw=window.innerWidth;
-    if(dist < Math.min(vw,window.innerHeight)*0.15){ // within ~15% of screen
+    if(dist < Math.min(window.innerWidth,window.innerHeight)*0.18){
       openChamber();
     }
     e.preventDefault();
@@ -2341,9 +2356,9 @@ function restartGame(){
       document.getElementById('secret-chamber').style.display='none';
       lockEl().classList.remove('unlocking');
       // Reset key back to original position
-      _kx=0;_ky=0;
       const k=keyEl();
-      k.style.transform='translateX(-50%) translate(0px,0px)';
+      k.style.top=''; k.style.bottom='14%';
+      k.style.left='34%'; k.style.transform='translateX(-50%)';
       k.classList.remove('floating');
       _keyFloating=false;
     },350);
