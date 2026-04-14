@@ -401,8 +401,10 @@ body{min-height:100vh;background:url('ludobg.png') center center / cover no-repe
 </div>
 <!-- Secret Key+Lock Layer — shown only after game starts, behind board -->
 <div id="secret-layer" style="display:none;position:fixed;inset:0;pointer-events:none;z-index:1;">
-  <img id="secret-lock" src="Lock.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:none;object-position:top left;pointer-events:none;" draggable="false"/>
-  <img id="secret-key" src="Key.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:none;object-position:top left;pointer-events:auto;cursor:grab;touch-action:none;" draggable="false"/>
+  <!-- Lock: top-left area of screen, small icon size -->
+  <img id="secret-lock" src="Lock.png" style="position:absolute;top:8%;left:28%;width:52px;height:52px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.7));" draggable="false"/>
+  <!-- Key: bottom-center of screen, small icon size -->
+  <img id="secret-key" src="Key.png" style="position:absolute;bottom:12%;left:50%;transform:translateX(-50%);width:44px;height:52px;object-fit:contain;pointer-events:auto;cursor:grab;touch-action:none;filter:drop-shadow(0 2px 8px rgba(245,197,24,0.5));" draggable="false"/>
 </div>
 
 <!-- Secret Chamber Modal -->
@@ -2250,7 +2252,7 @@ function restartGame(){
       sl.style.display='block';
       _kx=0;_ky=0;_keyFloating=false;_dragging=false;
       const k=keyEl();
-      if(k){k.style.transform='translate(0,0)';k.classList.remove('floating');}
+      if(k){k.style.transform='translateX(-50%) translate(0px,0px)';k.classList.remove('floating');}
       const l=lockEl();
       if(l) l.classList.remove('unlocking');
     }
@@ -2280,7 +2282,7 @@ function restartGame(){
     k.style.cursor='grabbing';
     k.classList.remove('floating'); // pause float anim while dragging
     const pt=e.touches?e.touches[0]:e;
-    // current rendered position = image natural pos + _kx,_ky
+    // current rendered position = _kx,_ky (transform offset from CSS initial position)
     _dragOffX=pt.clientX-_kx;
     _dragOffY=pt.clientY-_ky;
     e.preventDefault();
@@ -2292,7 +2294,7 @@ function restartGame(){
     const pt=e.touches?e.touches[0]:e;
     _kx=pt.clientX-_dragOffX;
     _ky=pt.clientY-_dragOffY;
-    keyEl().style.transform=`translate(${_kx}px,${_ky}px)`;
+    keyEl().style.transform=`translateX(-50%) translate(${_kx}px,${_ky}px)`;
     e.preventDefault();
   }
 
@@ -2302,24 +2304,20 @@ function restartGame(){
     keyEl().style.cursor='grab';
     keyEl().classList.add('floating'); // resume float
 
-    // Check proximity to lock
-    // Lock image: the actual lock icon is in top-left of the full-size PNG
-    // Based on the image, lock icon sits around x:220-270, y:110-155 in a ~800px wide image
-    // We scale to viewport
-    const vw=window.innerWidth, vh=window.innerHeight;
-    // Lock natural position in image (approx pixel center of lock icon in 800x1500 canvas)
-    const lockNatX=248, lockNatY=135, lockNatW=800, lockNatH=1500;
-    // Scale to screen
-    const lockSX=(lockNatX/lockNatW)*vw;
-    const lockSY=(lockNatY/lockNatH)*vh;
+    // Get actual screen positions of lock and key using getBoundingClientRect
+    const lockEl2=lockEl();
+    const keyEl2=keyEl();
+    if(!lockEl2||!keyEl2){e.preventDefault();return;}
+    const lr=lockEl2.getBoundingClientRect();
+    const kr=keyEl2.getBoundingClientRect();
+    const lockCX=lr.left+lr.width/2;
+    const lockCY=lr.top+lr.height/2;
+    const keyCX=kr.left+kr.width/2;
+    const keyCY=kr.top+kr.height/2;
 
-    // Key natural center in its PNG (approx 285,1360 in 800x1500 canvas)
-    const keyNatX=285, keyNatY=1360;
-    const keySX=(keyNatX/lockNatW)*vw + _kx;
-    const keySY=(keyNatY/lockNatH)*vh + _ky;
-
-    const dist=Math.hypot(keySX-lockSX, keySY-lockSY);
-    if(dist < Math.min(vw,vh)*0.12){ // within ~12% of screen size
+    const dist=Math.hypot(keyCX-lockCX, keyCY-lockCY);
+    const vw=window.innerWidth;
+    if(dist < Math.min(vw,window.innerHeight)*0.15){ // within ~15% of screen
       openChamber();
     }
     e.preventDefault();
@@ -2345,7 +2343,7 @@ function restartGame(){
       // Reset key back to original position
       _kx=0;_ky=0;
       const k=keyEl();
-      k.style.transform='translate(0,0)';
+      k.style.transform='translateX(-50%) translate(0px,0px)';
       k.classList.remove('floating');
       _keyFloating=false;
     },350);
