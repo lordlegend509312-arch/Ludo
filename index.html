@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"/>
-<title>Ludo King — Online Multiplayer</title>
+<title>Ludo — Offline Multiplayer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@700;900&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@700;900&family=Nunito:wght@600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@700;900&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet"></noscript>
 <style>
 :root{
   --gold:#F5C518;--gold2:#b8920f;--pink:#FF2D78;--blue:#FFD600;--green:#00C853;--yellow:#00AEEF;
@@ -14,88 +15,21 @@
   --text:#f0f0ff;--muted:rgba(240,240,255,.4);
 }
 *{box-sizing:border-box;margin:0;padding:0;user-select:none !important;-webkit-user-select:none !important;-webkit-touch-callout:none !important;}
-body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;font-family:'Inter',sans-serif;touch-action:manipulation;overflow:hidden;}
+body{min-height:100vh;background:url('ludoboard.png') center center / cover no-repeat fixed;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;font-family:'Inter',sans-serif;touch-action:manipulation;overflow:hidden;}
 
-/* ── LOBBY SCREEN ── */
-#lobby{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-#lobby-inner{display:flex;flex-direction:column;align-items:center;gap:20px;width:300px;}
-#lobby-crown{font-size:3.2rem;filter:drop-shadow(0 0 20px rgba(245,197,24,.7));animation:crownFloat 3s ease-in-out infinite;}
-@keyframes crownFloat{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-8px) rotate(2deg);}}
-#lobby-sub{color:var(--muted);font-size:11px;letter-spacing:3px;text-transform:uppercase;text-align:center;font-family:'Nunito',sans-serif;font-weight:700;}
-#lobby-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);}
-#lobby-title{color:var(--gold);font-size:16px;letter-spacing:2px;font-family:'Rajdhani',sans-serif;font-weight:700;text-align:center;}
-
-.s-card{
-  position:relative;overflow:hidden;
-  display:flex;align-items:center;gap:14px;
-  padding:16px 20px;
-  background:var(--surface);
-  border:1.5px solid var(--border);
-  border-radius:14px;
-  cursor:pointer;
-  transition:all 0.18s;
-  width:100%;
-}
-.s-card:hover,.s-card:active{border-color:var(--gold);background:var(--surface2);box-shadow:0 0 0 1px rgba(245,197,24,.15),0 8px 32px rgba(0,0,0,.5);}
-.s-card:active{transform:scale(0.98);}
-.s-card-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;}
-.s-card-text{display:flex;flex-direction:column;gap:3px;flex:1;}
-.s-card-title{color:var(--text);font-size:1rem;font-weight:800;font-family:'Nunito',sans-serif;letter-spacing:.3px;}
-.s-card-sub{color:var(--muted);font-size:11px;font-family:'Nunito',sans-serif;font-weight:600;line-height:1.4;}
-.s-card-arrow{color:rgba(255,255,255,.2);font-size:16px;flex-shrink:0;}
-.s-card-shine{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.03) 0%,transparent 60%);pointer-events:none;}
-
-/* ── MODALS ── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:400;align-items:center;justify-content:center;}
-.modal-overlay.show{display:flex;}
-.modal-box{background:var(--surface2);border:1.5px solid var(--border2);border-radius:20px;padding:28px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;width:300px;box-shadow:0 16px 60px rgba(0,0,0,.7);}
-.modal-title{color:white;font-size:1.2rem;font-weight:800;letter-spacing:.5px;font-family:'Rajdhani',sans-serif;}
-.modal-sub{color:var(--muted);font-size:12px;text-align:center;font-family:'Nunito',sans-serif;}
-.modal-input{
-  width:100%;padding:13px 16px;
-  background:var(--surface);border:1.5px solid var(--border2);
-  border-radius:12px;color:white;font-size:1rem;
-  font-family:'Nunito',sans-serif;font-weight:700;
-  letter-spacing:4px;text-align:center;outline:none;
-}
-.modal-input:focus{border-color:var(--gold);}
-.modal-btn{
-  width:100%;padding:14px 0;font-size:.9rem;font-weight:800;
-  border:none;border-radius:12px;cursor:pointer;
-  transition:transform 0.12s,opacity 0.12s;letter-spacing:.5px;
-  background:var(--gold);color:#000;
-}
-.modal-btn:active{transform:scale(0.96);}
-.modal-btn.secondary{background:var(--surface);border:1.5px solid var(--border2);color:var(--text);}
-.modal-btn:disabled{opacity:.4;cursor:not-allowed;}
-
-/* Room code display */
-.room-code-display{
-  background:var(--surface);border:2px solid var(--gold);
-  border-radius:14px;padding:14px 24px;
-  font-size:2rem;font-weight:900;color:var(--gold);
-  letter-spacing:8px;font-family:'Rajdhani',sans-serif;
-  text-align:center;
-}
-.waiting-dots::after{content:'';animation:dots 1.2s steps(3,end) infinite;}
-@keyframes dots{0%{content:'';}33%{content:'.';}66%{content:'..';}100%{content:'...';};}
-
-/* Player list in waiting room */
-.player-slot{
-  display:flex;align-items:center;gap:10px;
-  width:100%;padding:10px 14px;
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:10px;
-}
-.player-slot-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-.player-slot-name{color:var(--text);font-size:.9rem;font-family:'Nunito',sans-serif;font-weight:700;flex:1;}
-.player-slot-status{color:var(--muted);font-size:.75rem;font-family:'Nunito',sans-serif;}
-
-/* ── GAME ── */
-#game-wrap{display:inline-flex;flex-direction:column;align-items:stretch;gap:6px;display:none;}
+#game-wrap{display:inline-flex;flex-direction:column;align-items:stretch;gap:6px;}
 
 .prow{display:flex;justify-content:space-between;align-items:flex-end;}
 .prow.bottom{align-items:flex-start;}
+#btn-mute{
+  width:36px;height:36px;border-radius:10px;border:1.5px solid var(--border2);
+  background:var(--surface2);color:var(--muted);font-size:15px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;line-height:1;flex-shrink:0;align-self:center;
+}
+#btn-mute:hover{background:rgba(255,255,255,.28);transform:scale(1.08);}
+#btn-mute:active{transform:scale(0.94);}
+#btn-mute.muted{background:rgba(255,60,60,.25);border:1px solid rgba(255,60,60,.4);color:#FF2D78;}
 .pcol{display:flex;flex-direction:column;gap:5px;}
 .pcol.left{align-items:flex-start;}
 .pcol.right{align-items:flex-end;}
@@ -118,16 +52,6 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
   display:flex;align-items:center;justify-content:center;
 }
 
-/* "YOU" badge */
-.you-badge{
-  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
-  background:var(--gold);color:#000;
-  font-size:8px;font-weight:900;letter-spacing:1px;
-  padding:2px 6px;border-radius:6px;
-  font-family:'Rajdhani',sans-serif;
-  z-index:10;white-space:nowrap;
-}
-
 /* Board */
 #board-wrap{position:relative;}
 #board{
@@ -140,34 +64,139 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
   padding:5px;
   border-radius:10px;
   box-shadow:0 0 0 1px rgba(255,255,255,.05),0 8px 48px rgba(0,0,0,.8);
+  transform:translateZ(0);
+  -webkit-transform:translateZ(0);
 }
-.lc{display:flex;align-items:center;justify-content:center;}
+.lc{display:flex;align-items:center;justify-content:center;contain:layout style;}
 
 .star-svg{width:82%;height:82%;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px rgba(255,255,200,.8));}
 
-.dice-3d{width:38px;height:38px;position:relative;perspective:170px;cursor:pointer;}
+.dice-3d{width:44px;height:44px;min-width:44px;min-height:44px;position:relative;perspective:170px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .dice-3d.off{cursor:default;pointer-events:none;}
 .dice-3d.inactive{opacity:0;pointer-events:none;}
-.dice-cube{width:38px;height:38px;transform-style:preserve-3d;will-change:transform;}
+.dice-cube{width:38px;height:38px;transform-style:preserve-3d;will-change:transform;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
 .dice-face{position:absolute;width:38px;height:38px;border-radius:7px;border:1.5px solid #cdb880;backface-visibility:hidden;overflow:hidden;}
 .face-shine{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.65) 0%,transparent 50%);border-radius:7px;pointer-events:none;z-index:2;}
 .ddot{width:7px;height:7px;background:radial-gradient(circle at 33% 28%,#4a3878,#0e0c22);border-radius:50%;position:absolute;box-shadow:0 1px 2px rgba(0,0,0,.55);z-index:3;}
 
+/* Tokens on board */
 #tokens-layer{position:absolute;top:0;left:0;pointer-events:none;}
-.tok{position:absolute;pointer-events:none;will-change:transform;transition:none;left:0;top:0;}
+.tok{
+  position:absolute;
+  pointer-events:none;
+  will-change:transform;
+  transition:none;
+  left:0;top:0;
+}
 .tok.movable{pointer-events:auto;cursor:pointer;}
-.tok.movable::after{content:"";position:absolute;inset:-10px;border-radius:50%;}
-.tok.movable svg{animation:movablePulse 0.9s ease-in-out infinite alternate;}
-@keyframes movablePulse{from{opacity:0.85;transform:scale(0.95);}to{opacity:1;transform:scale(1.05);}}
-.tok-shadow{position:absolute;left:0;top:0;border-radius:50%;background:rgba(0,0,0,0.42);pointer-events:none;will-change:transform;transition:transform 0.09s cubic-bezier(0.22,1,0.36,1),opacity 0.15s;}
+.tok.movable::after{content:"";position:absolute;inset:-14px;border-radius:50%;}
+.tok.movable svg{
+  animation: movablePulse 0.85s ease-in-out infinite alternate;
+}
+@keyframes movablePulse{
+  from{opacity:0.85;transform:scale(0.95);}
+  to{opacity:1;transform:scale(1.05);}
+}
+/* Ludo King style — spinning ring under token */
+.tok-ring{
+  position:absolute;
+  left:0;top:0;
+  border-radius:50%;
+  pointer-events:none;
+  /* Conic gradient for spinning dashed look */
+  background: conic-gradient(
+    rgba(0,0,0,0.72) 0deg 60deg,
+    transparent 60deg 120deg,
+    rgba(0,0,0,0.72) 120deg 180deg,
+    transparent 180deg 240deg,
+    rgba(0,0,0,0.72) 240deg 300deg,
+    transparent 300deg 360deg
+  );
+  /* Mask to make it a ring (hollow center) */
+  -webkit-mask: radial-gradient(farthest-side, transparent 55%, black 56%);
+  mask: radial-gradient(farthest-side, transparent 55%, black 56%);
+  animation: tokRingSpin 0.9s linear infinite;
+}
+@keyframes tokRingSpin{
+  from{ transform: var(--tr-base) rotate(0deg); }
+  to{   transform: var(--tr-base) rotate(360deg); }
+}
+/* Shadow with blur */
+.tok-shadow{
+  position:absolute;left:0;top:0;border-radius:50%;
+  background:rgba(0,0,0,0.38);
+  filter:blur(3px);
+  pointer-events:none;will-change:transform,filter;
+  transition:transform 0.09s cubic-bezier(0.22,1,0.36,1),opacity 0.15s,filter 0.09s;
+}
 
-@keyframes ringPop{from{opacity:0.9;transform:translate(var(--rx),var(--ry)) scale(0.2);}to{opacity:0;transform:translate(var(--rx),var(--ry)) scale(2.2);}}
-@keyframes ringPop2{0%{opacity:0;}15%{opacity:0.7;}100%{opacity:0;transform:translate(var(--rx),var(--ry)) scale(2.6);}}
+/* Ring pop on capture landing */
+@keyframes ringPop{
+  from{opacity:0.9;transform:translate(var(--rx),var(--ry)) scale(0.2);}
+  to{opacity:0;transform:translate(var(--rx),var(--ry)) scale(2.2);}
+}
+/* Second ring (delayed) */
+@keyframes ringPop2{
+  0%{opacity:0;}
+  15%{opacity:0.7;}
+  100%{opacity:0;transform:translate(var(--rx),var(--ry)) scale(2.6);}
+}
+
+/* Token spawn bounce — scale(0)→scale(1.3)→scale(1) */
+@keyframes tokSpawnBounce{
+  0%{transform:var(--sp-base) scale(0) translateY(8px);}
+  55%{transform:var(--sp-base) scale(1.32) translateY(-4px);}
+  75%{transform:var(--sp-base) scale(0.88) translateY(2px);}
+  90%{transform:var(--sp-base) scale(1.06) translateY(0);}
+  100%{transform:var(--sp-base) scale(1) translateY(0);}
+}
+.tok-spawn{animation:tokSpawnBounce 0.38s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+
+/* Token landing squash */
+@keyframes tokLandSquash{
+  0%{transform:var(--sq-base) scaleX(1.18) scaleY(0.78);}
+  40%{transform:var(--sq-base) scaleX(0.93) scaleY(1.06);}
+  70%{transform:var(--sq-base) scaleX(1.04) scaleY(0.97);}
+  100%{transform:var(--sq-base) scaleX(1) scaleY(1);}
+}
+.tok-land{animation:tokLandSquash 0.22s cubic-bezier(0.22,1,0.36,1) forwards;}
+
+/* Star cell glow pulse on landing */
+@keyframes starGlow{
+  0%{box-shadow:0 0 0 0 rgba(255,220,0,0.8);}
+  40%{box-shadow:0 0 14px 8px rgba(255,220,0,0.55);}
+  100%{box-shadow:0 0 0 0 rgba(255,220,0,0);}
+}
+.star-land-glow{animation:starGlow 0.7s ease-out forwards;border-radius:4px;}
+
+/* Trail dots */
 .tok-trail{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;will-change:transform,opacity;animation:trailFade var(--td,0.4s) ease-out forwards;}
-@keyframes trailFade{from{opacity:var(--ta,0.7);transform:var(--tx) scale(var(--ts,1));}to{opacity:0;transform:var(--tx) scale(0.2);}}
-.sparkle{position:absolute;left:0;top:0;pointer-events:none;border-radius:50%;animation:sparkleFly var(--sd,0.6s) ease-out forwards;}
-@keyframes sparkleFly{0%{opacity:1;transform:var(--st) scale(1);}100%{opacity:0;transform:var(--st) translate(var(--sx),var(--sy)) scale(0);}}
+@keyframes trailFade{
+  from{opacity:var(--ta,0.7);transform:var(--tx) scale(var(--ts,1));}
+  to{opacity:0;transform:var(--tx) scale(0.2);}
+}
 
+/* Sparkle burst for home entry */
+.sparkle{position:absolute;left:0;top:0;pointer-events:none;border-radius:50%;animation:sparkleFly var(--sd,0.6s) ease-out forwards;}
+@keyframes sparkleFly{
+  0%{opacity:1;transform:var(--st) scale(1);}
+  100%{opacity:0;transform:var(--st) translate(var(--sx),var(--sy)) scale(0);}
+}
+
+/* Dice wobble on hover — only on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+.dice-3d:not(.off):not(.inactive):hover .dice-cube{
+  animation:diceWobble 0.4s ease-in-out;
+}
+}
+@keyframes diceWobble{
+  0%{transform:rotateX(var(--drx,0deg)) rotateY(var(--dry,0deg));}
+  25%{transform:rotateX(var(--drx,0deg)) rotateY(var(--dry,0deg)) rotate3d(1,1,0,12deg);}
+  50%{transform:rotateX(var(--drx,0deg)) rotateY(var(--dry,0deg)) rotate3d(1,-1,0,10deg);}
+  75%{transform:rotateX(var(--drx,0deg)) rotateY(var(--dry,0deg)) rotate3d(-1,1,0,8deg);}
+  100%{transform:rotateX(var(--drx,0deg)) rotateY(var(--dry,0deg));}
+}
+/* Dice landing thud */
 @keyframes diceLand{
   0%{transform:rotateX(var(--drx,0deg)) rotateY(var(--dry,0deg)) scale(1.18);}
   55%{transform:rotateX(var(--drx,0deg)) rotateY(var(--dry,0deg)) scale(0.93);}
@@ -176,92 +205,176 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
 }
 .dice-cube.landing{animation:diceLand 0.35s cubic-bezier(0.36,0.07,0.19,0.97) forwards;}
 
+/* Status row with back + pause */
 #status-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px;}
 #btn-back,#btn-pause{
-  width:36px;height:36px;border-radius:10px;border:1.5px solid var(--border2);
-  background:var(--surface2);color:var(--muted);font-size:15px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:all 0.15s;line-height:1;align-self:center;flex-shrink:0;
+  width:36px;height:36px;
+  border-radius:10px;
+  border:1.5px solid var(--border2);
+  background:var(--surface2);
+  color:var(--muted);
+  font-size:15px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;
+  line-height:1;
+  align-self:center;
+  flex-shrink:0;
 }
 #btn-back:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:white;}
 #btn-pause:hover{background:rgba(255,60,60,.15);border-color:rgba(255,60,60,.4);color:white;}
 #btn-back:active,#btn-pause:active{transform:scale(0.92);}
 
-/* Sync indicator */
-#sync-bar{
-  display:flex;align-items:center;gap:6px;
-  font-size:10px;font-family:'Nunito',sans-serif;font-weight:700;
-  color:var(--muted);padding:0 4px;flex:1;justify-content:center;
+/* Pause overlay */
+#pause-overlay{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.8);
+  backdrop-filter:blur(6px);
+  z-index:150;
+  align-items:center;justify-content:center;
 }
-#sync-dot{width:7px;height:7px;border-radius:50%;background:#555;flex-shrink:0;transition:background 0.3s;}
-#sync-dot.ok{background:#00C853;box-shadow:0 0 6px #00C853;}
-#sync-dot.warn{background:#FFD600;box-shadow:0 0 6px #FFD600;}
-#sync-dot.err{background:#FF2D78;box-shadow:0 0 6px #FF2D78;}
-
-/* Turn indicator */
-#turn-banner{
-  text-align:center;font-size:11px;font-family:'Rajdhani',sans-serif;
-  font-weight:700;letter-spacing:1px;color:var(--muted);
-  flex:1;padding:0 4px;
-}
-
-#pause-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:150;align-items:center;justify-content:center;}
 #pause-overlay.show{display:flex;}
-#pause-box{background:var(--surface2);border:1.5px solid var(--border2);border-radius:20px;padding:32px 36px;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 16px 60px rgba(0,0,0,.7);width:280px;}
+#pause-box{
+  background:var(--surface2);
+  border:1.5px solid var(--border2);
+  border-radius:20px;
+  padding:32px 36px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  box-shadow:0 16px 60px rgba(0,0,0,.7);
+  width:280px;
+}
 #pause-title{color:white;font-size:1.3rem;font-weight:800;letter-spacing:.5px;font-family:'Rajdhani',sans-serif;}
-.pause-btn{width:100%;padding:13px 0;font-size:.9rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;transition:transform 0.12s,opacity 0.12s;letter-spacing:.5px;}
+.pause-btn{
+  width:100%;padding:13px 0;
+  font-size:.9rem;font-weight:700;
+  border:none;border-radius:12px;
+  cursor:pointer;
+  transition:transform 0.12s,opacity 0.12s;
+  letter-spacing:.5px;
+}
 .pause-btn:active{transform:scale(0.96);}
 .pause-btn{background:var(--gold);color:#000;}
 .pause-btn.secondary{background:var(--surface);border:1.5px solid var(--border2);color:var(--text);}
 
-#win{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:18px;}
+#win{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:16px;overflow:hidden;}
 #win.show{display:flex;}
-#win-trophy{font-size:3.5rem;animation:trophyBounce .6s cubic-bezier(.4,1.6,.6,1);}
-@keyframes trophyBounce{from{transform:scale(0) rotate(-15deg);}to{transform:scale(1) rotate(0deg);}}
-#win h1{color:var(--gold);font-size:1.8rem;font-weight:900;text-align:center;font-family:'Rajdhani',sans-serif;letter-spacing:2px;}
-#win-places{color:var(--text);font-size:1rem;text-align:center;font-family:'Rajdhani',sans-serif;line-height:2;white-space:pre;}
-#win button{padding:13px 40px;font-size:.95rem;border:none;border-radius:12px;cursor:pointer;background:var(--gold);color:#000;font-weight:800;box-shadow:0 6px 24px rgba(245,197,24,.3);letter-spacing:.5px;}
-#win button:active{transform:scale(0.96);}
-
-/* Toast notification */
-#toast{
-  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:rgba(30,30,60,.95);border:1px solid var(--border2);
-  color:white;font-size:.85rem;font-family:'Nunito',sans-serif;font-weight:700;
-  padding:10px 20px;border-radius:20px;
-  opacity:0;transition:opacity 0.2s,transform 0.2s;
-  pointer-events:none;z-index:500;white-space:nowrap;
+#win-confetti-canvas{position:absolute;inset:0;pointer-events:none;z-index:0;}
+#win-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px;}
+#win-trophy{font-size:4rem;animation:trophyEntrance 0.7s cubic-bezier(.2,1.4,.4,1) forwards;opacity:0;}
+@keyframes trophyEntrance{
+  0%{opacity:0;transform:scale(0) rotate(-25deg) translateY(30px);}
+  60%{opacity:1;transform:scale(1.25) rotate(8deg) translateY(-8px);}
+  80%{transform:scale(0.92) rotate(-3deg);}
+  100%{opacity:1;transform:scale(1) rotate(0deg) translateY(0);}
 }
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+@keyframes trophyFloat{
+  0%,100%{transform:translateY(0) rotate(-2deg);}
+  50%{transform:translateY(-10px) rotate(2deg);}
+}
+#win-trophy.float{animation:trophyFloat 2.2s ease-in-out infinite;}
+#win h1{
+  color:var(--gold);font-size:1.9rem;font-weight:900;text-align:center;
+  font-family:'Rajdhani',sans-serif;letter-spacing:2px;
+  opacity:0;animation:slideUp 0.5s 0.4s cubic-bezier(.2,1.4,.4,1) forwards;
+}
+@keyframes slideUp{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+#win-crown-ring{
+  font-size:1.1rem;letter-spacing:6px;
+  opacity:0;animation:slideUp 0.5s 0.55s ease-out forwards;
+}
+#win-places{
+  color:var(--text);font-size:1rem;text-align:center;
+  font-family:'Rajdhani',sans-serif;line-height:2.1;white-space:pre;
+  opacity:0;animation:slideUp 0.5s 0.7s ease-out forwards;
+  background:rgba(255,255,255,.04);border-radius:14px;
+  padding:12px 28px;border:1px solid rgba(255,255,255,.1);
+}
+#win button{
+  padding:14px 44px;font-size:.95rem;border:none;border-radius:14px;
+  cursor:pointer;background:var(--gold);color:#000;font-weight:800;
+  box-shadow:0 6px 28px rgba(245,197,24,.4);letter-spacing:.5px;
+  opacity:0;animation:slideUp 0.5s 0.9s ease-out forwards;
+  transition:transform 0.12s,box-shadow 0.12s;
+}
+#win button:hover{transform:scale(1.05);box-shadow:0 8px 36px rgba(245,197,24,.6);}
+#win button:active{transform:scale(0.96);}
+/* Winner color burst rings */
+.win-ring{position:absolute;border-radius:50%;pointer-events:none;border:3px solid var(--wr-col);animation:winRingExpand var(--wr-dur) var(--wr-delay) ease-out forwards;opacity:0;}
+@keyframes winRingExpand{
+  0%{opacity:0.9;transform:translate(-50%,-50%) scale(0);}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1);}
+}
 
-/* Perspective rotation for players */
-.board-rotated-180{transform:rotate(180deg);}
-.board-rotated-90{transform:rotate(90deg);}
-.board-rotated-270{transform:rotate(270deg);}
+/* ── Startup Screen ── */
+#startup{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#startup-inner{display:flex;flex-direction:column;align-items:center;gap:20px;width:300px;}
+#startup-crown{font-size:3.2rem;filter:drop-shadow(0 0 20px rgba(245,197,24,.7));animation:crownFloat 3s ease-in-out infinite;}
+@keyframes crownFloat{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-8px) rotate(2deg);}}
+
+#startup-logo{display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:4px;}
+#startup-sub{color:var(--muted);font-size:11px;letter-spacing:3px;text-transform:uppercase;text-align:center;margin-top:-6px;font-family:'Nunito',sans-serif;font-weight:700;}
+#startup-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);margin:2px 0;}
+#startup-heading{display:none;}
+#startup-cards{display:flex;flex-direction:column;gap:10px;width:100%;}
+.s-card{
+  position:relative;overflow:hidden;
+  display:flex;align-items:center;gap:14px;
+  padding:16px 20px;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:14px;
+  cursor:pointer;
+  transition:all 0.18s;
+  width:100%;
+}
+.s-card:hover,.s-card:active{border-color:var(--gold);background:var(--surface2);box-shadow:0 0 0 1px rgba(245,197,24,.15),0 8px 32px rgba(0,0,0,.5);}
+.s-card:active{transform:scale(0.98);}
+.s-card-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;}
+.s-card-text{display:flex;flex-direction:column;gap:3px;flex:1;}
+.s-card-title{color:var(--text);font-size:1rem;font-weight:800;font-family:'Nunito',sans-serif;letter-spacing:.3px;}
+.s-card-sub{color:var(--muted);font-size:11px;font-family:'Nunito',sans-serif;font-weight:600;line-height:1.4;}
+.s-card-arrow{color:rgba(255,255,255,.2);font-size:16px;flex-shrink:0;}
+.s-card-shine{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.03) 0%,transparent 60%);pointer-events:none;}
 </style>
 </head>
 <body>
-
-<!-- ── LOBBY ── -->
-<div id="lobby">
-  <div id="lobby-inner">
-    <div id="lobby-crown">👑</div>
-    <div id="lobby-sub">ONLINE MULTIPLAYER</div>
-    <div id="lobby-divider"></div>
-    <div id="lobby-cards" style="display:flex;flex-direction:column;gap:10px;width:100%;">
-      <div class="s-card" onclick="showCreateRoom()">
-        <div class="s-card-icon" style="background:linear-gradient(135deg,#f5a623,#e07b00);">🏠</div>
+<div id="startup">
+  <div id="startup-inner">
+    <div id="startup-logo">
+      
+      <div id="startup-crown">👑</div>
+    </div>
+    <div id="startup-sub">Pass &amp; Play</div>
+    <div id="startup-divider"></div>
+    <div id="startup-heading">Offline Multiplayer</div>
+    <div id="startup-cards">
+      <div class="s-card" onclick="startGame(2)">
+        <div class="s-card-icon" style="background:linear-gradient(135deg,#FF2D78,#c4005e);">👥</div>
         <div class="s-card-text">
-          <div class="s-card-title">Create Room</div>
-          <div class="s-card-sub">Host a game and share the code</div>
+          <div class="s-card-title">2 Players</div>
+          <div class="s-card-sub">Two players on the same device</div>
         </div>
         <div class="s-card-arrow">›</div>
         <div class="s-card-shine"></div>
       </div>
-      <div class="s-card" onclick="showJoinRoom()">
-        <div class="s-card-icon" style="background:linear-gradient(135deg,#00bcd4,#0086a0);">🔗</div>
+      <div class="s-card" onclick="startGame(3)">
+        <div class="s-card-icon" style="background:linear-gradient(135deg,#FFD600,#006fa8);">👥</div>
         <div class="s-card-text">
-          <div class="s-card-title">Join Room</div>
-          <div class="s-card-sub">Enter a 6-digit room code</div>
+          <div class="s-card-title">3 Players</div>
+          <div class="s-card-sub">Three players on the same device</div>
+        </div>
+        <div class="s-card-arrow">›</div>
+        <div class="s-card-shine"></div>
+      </div>
+      <div class="s-card" onclick="startGame(4)">
+        <div class="s-card-icon" style="background:linear-gradient(135deg,#00C853,#007a32);">👥</div>
+        <div class="s-card-text">
+          <div class="s-card-title">4 Players</div>
+          <div class="s-card-sub">Four players on the same device</div>
         </div>
         <div class="s-card-arrow">›</div>
         <div class="s-card-shine"></div>
@@ -269,59 +382,6 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
     </div>
   </div>
 </div>
-
-<!-- ── CREATE ROOM MODAL ── -->
-<div class="modal-overlay" id="modal-create">
-  <div class="modal-box">
-    <div class="modal-title">Create Room</div>
-    <div class="modal-sub">Choose number of players</div>
-    <div style="display:flex;gap:8px;width:100%;">
-      <button class="modal-btn" onclick="createRoom(2)" style="flex:1;">2P</button>
-      <button class="modal-btn" onclick="createRoom(3)" style="flex:1;">3P</button>
-      <button class="modal-btn" onclick="createRoom(4)" style="flex:1;">4P</button>
-    </div>
-    <button class="modal-btn secondary" onclick="closeModals()">Cancel</button>
-  </div>
-</div>
-
-<!-- ── WAITING ROOM MODAL (host) ── -->
-<div class="modal-overlay" id="modal-waiting">
-  <div class="modal-box">
-    <div class="modal-title">Waiting for Players</div>
-    <div class="modal-sub">Share this code with friends</div>
-    <div class="room-code-display" id="display-room-code">------</div>
-    <div id="player-list" style="display:flex;flex-direction:column;gap:6px;width:100%;"></div>
-    <div class="modal-sub waiting-dots" id="waiting-status">Waiting</div>
-    <button class="modal-btn" id="btn-start-game" onclick="hostStartGame()" disabled style="background:var(--surface);border:1.5px solid var(--border2);color:var(--muted);">Start Game</button>
-    <button class="modal-btn secondary" onclick="leaveRoom()">Leave Room</button>
-  </div>
-</div>
-
-<!-- ── JOIN ROOM MODAL ── -->
-<div class="modal-overlay" id="modal-join">
-  <div class="modal-box">
-    <div class="modal-title">Join Room</div>
-    <div class="modal-sub">Enter the 6-digit room code</div>
-    <input class="modal-input" id="join-code-input" type="text" maxlength="6" placeholder="000000"
-      oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
-    <input class="modal-input" id="join-name-input" type="text" maxlength="12" placeholder="Your Name"
-      style="letter-spacing:1px;" oninput="">
-    <button class="modal-btn" id="btn-join" onclick="joinRoom()">Join</button>
-    <button class="modal-btn secondary" onclick="closeModals()">Cancel</button>
-  </div>
-</div>
-
-<!-- ── NAME MODAL (host) ── -->
-<div class="modal-overlay" id="modal-name">
-  <div class="modal-box">
-    <div class="modal-title">Your Name</div>
-    <input class="modal-input" id="host-name-input" type="text" maxlength="12" placeholder="Host"
-      style="letter-spacing:1px;">
-    <button class="modal-btn" onclick="confirmHostName()">Continue</button>
-  </div>
-</div>
-
-<!-- ── GAME WRAP ── -->
 <div id="game-wrap">
   <div class="prow" id="top-row" style="align-items:center;"></div>
   <div id="board-wrap">
@@ -329,492 +389,98 @@ body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;al
     <div id="tokens-layer"></div>
   </div>
   <div class="prow bottom" id="bot-row"></div>
-  <div id="status-row" style="display:none;">
-    <button id="btn-back" onclick="leaveRoom()" title="Leave">🏠</button>
-    <div id="sync-bar"><div id="sync-dot"></div><span id="sync-text">Connecting</span></div>
-    <div id="turn-banner"></div>
-    <button id="btn-pause" onclick="togglePause()" title="Pause">&#10074;&#10074;</button>
-  </div>
+  <div id="status-row" style="display:none;"></div>
 </div>
 
-<!-- ── PAUSE ── -->
+<!-- Pause overlay -->
 <div id="pause-overlay">
   <div id="pause-box">
     <div id="pause-title">Game Paused</div>
     <button class="pause-btn" onclick="togglePause()">▶ Resume</button>
-    <button class="pause-btn secondary" onclick="leaveRoom()">🏠 Leave Game</button>
+    <button class="pause-btn secondary" onclick="goBack()">🏠 Main Menu</button>
+  </div>
+</div>
+<div id="win">
+  <canvas id="win-confetti-canvas"></canvas>
+  <div id="win-content">
+    <div id="win-trophy">🏆</div>
+    <h1 id="win-msg">You Win!</h1>
+    <div id="win-crown-ring">✦ ✦ ✦</div>
+    <pre id="win-places"></pre>
+    <button onclick="restartGame()">▶ Play Again</button>
   </div>
 </div>
 
-<!-- ── WIN ── -->
-<div id="win">
-  <div id="win-trophy">🏆</div>
-  <h1 id="win-msg">You Win!</h1>
-  <pre id="win-places"></pre>
-  <button onclick="backToLobby()">Play Again</button>
-</div>
+<script>
+const PINK="#FF2D78",BLUE="#FFD600",GREEN="#00C853",YELLOW="#00AEEF";
+const DEF="#CFD8DC",BOARD_BG="#546E7A";
 
-<!-- ── TOAST ── -->
-<div id="toast"></div>
+// Will be set by startGame()
+let PLAYERS=[
+  {id:0,color:PINK,  label:"Player 2",human:true,side:"left"},
+  {id:1,color:BLUE,  label:"Player 3",human:true,side:"right"},
+  {id:2,color:GREEN, label:"Player 4",human:true,side:"right"},
+  {id:3,color:YELLOW,label:"Player 1",human:true,side:"left"},
+];
 
-<!-- Firebase SDKs -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, off, update, push, remove, serverTimestamp, onDisconnect }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+let NUM_PLAYERS = 4; // default, set by startGame
 
-// ── Firebase Config ────────────────────────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyCCbwUS-MK4Ic8Tyd_FIBOQTwdfP0kZ_YM",
-  authDomain: "ludo-king-ka-baap.firebaseapp.com",
-  databaseURL: "https://ludo-king-ka-baap-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ludo-king-ka-baap",
-  storageBucket: "ludo-king-ka-baap.firebasestorage.app",
-  messagingSenderId: "273830749078",
-  appId: "1:273830749078:web:b197c8e42fc24b2b8a73b7",
-  measurementId: "G-GD8PS12RM3"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-// ── Constants ──────────────────────────────────────────────────────────────────
-const PINK="#FF2D78", BLUE="#FFD600", GREEN="#00C853", YELLOW="#00AEEF";
-const DEF="#CFD8DC", BOARD_BG="#546E7A";
-const PLAYER_BLUE = "#4FC3F7"; // Perspective-blue for local player
-
-// Color order (board slots): 0=PINK(botLeft), 1=BLUE(topRight), 2=GREEN(botRight), 3=YELLOW(topLeft)
-// But each player sees themselves as BLUE in bottom-left
-const SLOT_COLORS = [PINK, BLUE, GREEN, YELLOW];
-const SLOT_CORNERS = {
-  0: [9,0], // YELLOW home = bottom-left → slot 0 for P0
-  1: [0,9], // BLUE home   = top-right  → slot 1 for P1
-  2: [9,9], // GREEN home  = bottom-right → slot 2 for P2
-  3: [0,0], // PINK home   = top-left   → slot 3 for P3
-};
-// Perspective: player sees themselves at slot=3 (PINK, top-left... wait — we want bottom-left)
-// We'll assign each joining player a SEAT (0-3). The PERSPECTIVE rotation makes:
-// Seat 0 sees board normal (their home is bottom-left = YELLOW corner [9,0])
-// Seat 1 sees board rotated 180° (their home is bottom-left after rotation)
-// Seat 2 sees board rotated 90°
-// Seat 3 sees board rotated 270°
-
-// Actually, keep it simple: each player gets a seat. The board is NOT rotated visually
-// (it's a shared board). BUT each player's POV panel is at bottom. 
-// The BLUE color token displayed in their panel is always their own color, tinted blue locally.
-
-const STEP_MAIN_END = 51;
-const STEP_STRETCH_START = 52;
-const STEP_DONE = 57;
-
-// Seat → which corner/color they "own"
-// Seat 0 → PINK (top-left corner, player panel at left)
-// Seat 3 → YELLOW (bottom-left, panel bot-left) — HOST
-// We'll fix: HOST = seat 3 always, first to join = seat 0, etc.
-// Actually simpler: we assign seats 0,1,2,3 to players as they join.
-// Seat defines their color and panel position.
-
-const SEAT_COLOR = [PINK, BLUE, GREEN, YELLOW]; // seat → board color
-const SEAT_HOME_CORNER = {
-  [PINK]: [0,0],
-  [BLUE]: [0,9],
-  [GREEN]: [9,9],
-  [YELLOW]: [9,0]
-};
-
-// ── Game state ─────────────────────────────────────────────────────────────────
-let ROOM_CODE = null;
-let MY_SEAT = null; // 0..3
-let MY_NAME = "Player";
-let IS_HOST = false;
-let NUM_PLAYERS = 4;
-let roomRef = null;
-let gameRef = null;
-let playersRef = null;
-let _listeners = [];
-let _presenceRef = null;
-
-let PLAYERS = []; // {id, seat, color, label, active, human}
-let G = { turn:0, diceVal:null, rolled:false, waiting:false, over:false, sixes:0, tokens:[], placements:[] };
-let G_PAUSED = false;
-let _rolling = false;
-
-// ── UI Helpers ────────────────────────────────────────────────────────────────
-function showToast(msg, dur=2500){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  clearTimeout(t._tid);
-  t._tid = setTimeout(()=>t.classList.remove("show"), dur);
-}
-
-function setSyncStatus(status){ // 'ok' | 'warn' | 'err'
-  const dot = document.getElementById("sync-dot");
-  const txt = document.getElementById("sync-text");
-  dot.className = status;
-  txt.textContent = status==="ok"?"Synced":status==="warn"?"Syncing...":"Disconnected";
-}
-
-function closeModals(){
-  document.querySelectorAll(".modal-overlay").forEach(m=>m.classList.remove("show"));
-}
-
-window.showCreateRoom = function(){
-  document.getElementById("modal-name").classList.add("show");
-};
-window.showJoinRoom = function(){
-  document.getElementById("modal-join").classList.add("show");
-};
-window.closeModals = closeModals;
-
-window.confirmHostName = function(){
-  const name = document.getElementById("host-name-input").value.trim() || "Host";
-  MY_NAME = name;
-  closeModals();
-  document.getElementById("modal-create").classList.add("show");
-};
-
-// ── Generate room code ─────────────────────────────────────────────────────────
-function genCode(){
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for(let i=0;i<6;i++) code += chars[Math.floor(Math.random()*chars.length)];
-  return code;
-}
-
-// ── Create Room ────────────────────────────────────────────────────────────────
-window.createRoom = async function(numPlayers){
-  closeModals();
+function startGame(numPlayers){
   NUM_PLAYERS = numPlayers;
-  IS_HOST = true;
-  MY_SEAT = 3; // Host is always seat 3 (YELLOW = bottom-left)
+  SFX.gameStart();
 
-  // Generate unique room code
-  let code, exists;
-  do {
-    code = genCode();
-    const snap = await get(ref(db, `rooms/${code}`));
-    exists = snap.exists();
-  } while(exists);
-
-  ROOM_CODE = code;
-  roomRef = ref(db, `rooms/${code}`);
-  gameRef = ref(db, `rooms/${code}/game`);
-  playersRef = ref(db, `rooms/${code}/players`);
-
-  // Create room in Firebase
-  await set(roomRef, {
-    numPlayers,
-    status: "waiting",
-    host: MY_SEAT,
-    createdAt: serverTimestamp(),
-    players: {
-      3: { name: MY_NAME, seat: 3, online: true, joinedAt: serverTimestamp() }
-    }
-  });
-
-  // Presence
-  _presenceRef = ref(db, `rooms/${code}/players/3/online`);
-  onDisconnect(_presenceRef).set(false);
-
-  document.getElementById("display-room-code").textContent = code;
-  document.getElementById("modal-waiting").classList.add("show");
-  updatePlayerList({ 3: { name: MY_NAME, seat: 3, online: true } });
-  listenRoom();
-};
-
-// ── Join Room ──────────────────────────────────────────────────────────────────
-window.joinRoom = async function(){
-  const code = document.getElementById("join-code-input").value.trim().toUpperCase();
-  const name = document.getElementById("join-name-input").value.trim() || "Player";
-  if(code.length !== 6){ showToast("Enter a 6-digit code"); return; }
-
-  MY_NAME = name;
-  const rSnap = await get(ref(db, `rooms/${code}`));
-  if(!rSnap.exists()){ showToast("Room not found"); return; }
-  const rData = rSnap.val();
-  if(rData.status === "playing"){ showToast("Game already started"); return; }
-
-  // Find available seat
-  const taken = Object.keys(rData.players||{}).map(Number);
-  const allSeats = [0,1,2,3].slice(0, rData.numPlayers);
-  const free = allSeats.filter(s=>!taken.includes(s));
-  if(free.length === 0){ showToast("Room is full"); return; }
-
-  MY_SEAT = free[0];
-  IS_HOST = false;
-  NUM_PLAYERS = rData.numPlayers;
-  ROOM_CODE = code;
-  roomRef = ref(db, `rooms/${code}`);
-  gameRef = ref(db, `rooms/${code}/game`);
-  playersRef = ref(db, `rooms/${code}/players`);
-
-  // Register player
-  await set(ref(db, `rooms/${code}/players/${MY_SEAT}`), {
-    name: MY_NAME, seat: MY_SEAT, online: true, joinedAt: serverTimestamp()
-  });
-
-  _presenceRef = ref(db, `rooms/${code}/players/${MY_SEAT}/online`);
-  onDisconnect(_presenceRef).set(false);
-
-  closeModals();
-  document.getElementById("display-room-code").textContent = code;
-  document.getElementById("modal-waiting").classList.add("show");
-  listenRoom();
-};
-
-// ── Listen to room changes ─────────────────────────────────────────────────────
-function listenRoom(){
-  const unsub1 = onValue(playersRef, snap=>{
-    const players = snap.val() || {};
-    updatePlayerList(players);
-    const count = Object.keys(players).length;
-
-    // Enable start if host and enough players
-    if(IS_HOST){
-      const btn = document.getElementById("btn-start-game");
-      const ready = count >= 2;
-      btn.disabled = !ready;
-      btn.style.background = ready ? "var(--gold)" : "var(--surface)";
-      btn.style.color = ready ? "#000" : "var(--muted)";
-      btn.style.borderColor = ready ? "var(--gold)" : "var(--border2)";
-    }
-  });
-  _listeners.push(()=>off(playersRef, "value", unsub1));
-
-  // Listen for game start
-  const gameStatusRef = ref(db, `rooms/${ROOM_CODE}/status`);
-  const unsub2 = onValue(gameStatusRef, snap=>{
-    if(snap.val() === "playing"){
-      closeModals();
-      loadAndStartGame();
-    }
-  });
-  _listeners.push(()=>off(gameStatusRef, "value", unsub2));
-
-  // Listen for game state (once game starts)
-  const unsub3 = onValue(gameRef, snap=>{
-    if(!snap.exists()) return;
-    const data = snap.val();
-    if(data && G.over === false) syncGameState(data);
-  });
-  _listeners.push(()=>off(gameRef, "value", unsub3));
-}
-
-function updatePlayerList(players){
-  const container = document.getElementById("player-list");
-  container.innerHTML = "";
-  const seats = Object.values(players).sort((a,b)=>a.seat-b.seat);
-  const colors = [PINK, BLUE, GREEN, YELLOW];
-  seats.forEach(p=>{
-    const div = document.createElement("div");
-    div.className = "player-slot";
-    const isSelf = p.seat === MY_SEAT;
-    div.innerHTML = `
-      <div class="player-slot-dot" style="background:${colors[p.seat]||'#888'}"></div>
-      <div class="player-slot-name">${p.name}${isSelf?' (You)':''}</div>
-      <div class="player-slot-status" style="color:${p.online?'#00C853':'#FF2D78'}">${p.online?'Online':'Away'}</div>
-    `;
-    container.appendChild(div);
-  });
-
-  const status = document.getElementById("waiting-status");
-  const needed = NUM_PLAYERS;
-  const have = Object.keys(players).length;
-  status.textContent = have >= needed ? "All players joined!" : `Waiting for ${needed-have} more player${needed-have>1?'s':''}`;
-}
-
-// ── Host starts game ──────────────────────────────────────────────────────────
-window.hostStartGame = async function(){
-  if(!IS_HOST) return;
-
-  // Get players snapshot
-  const snap = await get(playersRef);
-  const playersData = snap.val() || {};
-  const seats = Object.keys(playersData).map(Number);
-
-  // Build initial game state
-  const tokens = [];
-  for(let seat=0; seat<4; seat++){
-    if(!seats.includes(seat)) continue;
-    for(let tid=0; tid<4; tid++){
-      tokens.push({ pid: seat, tid, step: 0 });
-    }
+  if(numPlayers === 2){
+    PLAYERS=[
+      {id:0,color:PINK,  label:"Player 2",human:true,side:"left",  active:true},
+      {id:1,color:BLUE,  label:"Player 3",human:true,side:"right", active:false},
+      {id:2,color:GREEN, label:"Player 4",human:true,side:"right", active:false},
+      {id:3,color:YELLOW,label:"Player 1",human:true,side:"left",  active:true},
+    ];
+  } else if(numPlayers === 3){
+    PLAYERS=[
+      {id:0,color:PINK,  label:"Player 2",human:true,side:"left",  active:true},
+      {id:1,color:BLUE,  label:"Player 3",human:true,side:"right", active:true},
+      {id:2,color:GREEN, label:"Player 4",human:true,side:"right", active:false},
+      {id:3,color:YELLOW,label:"Player 1",human:true,side:"left",  active:true},
+    ];
+  } else {
+    PLAYERS=[
+      {id:0,color:PINK,  label:"Player 2",human:true,side:"left",  active:true},
+      {id:1,color:BLUE,  label:"Player 3",human:true,side:"right", active:true},
+      {id:2,color:GREEN, label:"Player 4",human:true,side:"right", active:true},
+      {id:3,color:YELLOW,label:"Player 1",human:true,side:"left",  active:true},
+    ];
   }
 
-  const initGame = {
-    turn: 3, // Host (seat 3) goes first
-    diceVal: null,
-    rolled: false,
-    waiting: false,
-    over: false,
-    sixes: 0,
-    tokens,
-    placements: [],
-    lastAction: null,
-    actionBy: null,
-    timestamp: serverTimestamp()
-  };
+  document.getElementById("startup").style.display="none";
 
-  await set(gameRef, initGame);
-  await update(roomRef, { status: "playing" });
-};
+  // Reset everything — force-clear ALL dAcc state so no busy-lock survives restart
+  Object.keys(_tokEls).forEach(k=>_removeTokEl(k));
+  // Keep dAcc.rx/ry/last intact so dice face doesn't flash/jump on restart
+  [0,1,2,3].forEach(k=>{dAcc.busy[k]=false;});
+  // Only null out last if it was never set (fresh page load) — avoids face-reset glitch
+  [0,1,2,3].forEach(k=>{if(dAcc.last[k]===undefined)dAcc.last[k]=null;});
+  G={turn:3,diceVal:null,rolled:false,waiting:false,over:false,sixes:0,tokens:[],placements:[]};
+  _rolling=false; // reset roll guard on new game
 
-// ── Load and start game ────────────────────────────────────────────────────────
-async function loadAndStartGame(){
-  // Get all players
-  const snap = await get(playersRef);
-  const playersData = snap.val() || {};
+  // Find first active player
+  if(!PLAYERS[G.turn].active){
+    let t=0;
+    while(!PLAYERS[t].active) t=(t+1)%4;
+    G.turn=t;
+  }
 
-  PLAYERS = [];
-  const seats = [0,1,2,3];
-  seats.forEach(seat=>{
-    const p = playersData[seat];
-    PLAYERS.push({
-      id: seat,
-      seat,
-      color: SEAT_COLOR[seat],
-      label: p ? p.name : `P${seat+1}`,
-      active: !!p,
-      human: true,
-    });
-  });
-
-  // Hide lobby, show game
-  document.getElementById("lobby").style.display = "none";
-  document.getElementById("game-wrap").style.display = "inline-flex";
-  document.getElementById("status-row").style.display = "flex";
-
-  // Get initial game state
-  const gSnap = await get(gameRef);
-  const gData = gSnap.val();
-  G = {
-    turn: gData.turn || 3,
-    diceVal: null,
-    rolled: gData.rolled || false,
-    waiting: gData.waiting || false,
-    over: false,
-    sixes: gData.sixes || 0,
-    tokens: gData.tokens || [],
-    placements: gData.placements || []
-  };
-
+  initTokens();
   buildBoard();
   buildPlayers();
-  setSyncStatus("ok");
   refreshUI();
   renderTokens();
-  updateTurnBanner();
-
-  showToast(`Game started! You are ${PLAYERS[MY_SEAT].label} (${getMyColorName()})`);
+  // All players are human — no AI auto-roll needed
 }
 
-function getMyColorName(){
-  const names = { [PINK]:"Red", [BLUE]:"Yellow", [GREEN]:"Green", [YELLOW]:"Blue" };
-  return names[PLAYERS[MY_SEAT]?.color] || "Player";
-}
-
-// ── Sync game state from Firebase ─────────────────────────────────────────────
-let _lastTs = 0;
-let _applyingRemote = false;
-
-function syncGameState(data){
-  if(_applyingRemote) return;
-  // Don't apply our own pending actions
-  const ts = data.timestamp || 0;
-  if(ts <= _lastTs && _lastTs > 0) return;
-  _lastTs = ts;
-
-  setSyncStatus("ok");
-
-  const prevTurn = G.turn;
-
-  G.turn = data.turn;
-  G.rolled = data.rolled;
-  G.waiting = data.waiting;
-  G.over = data.over;
-  G.sixes = data.sixes || 0;
-  G.placements = data.placements || [];
-
-  if(data.tokens){
-    G.tokens = data.tokens;
-  }
-
-  if(G.over && !document.getElementById("win").classList.contains("show")){
-    endGame();
-    return;
-  }
-
-  if(data.diceVal && data.diceVal !== G.diceVal){
-    // Animate remote dice
-    const rolledBy = data.actionBy;
-    G.diceVal = data.diceVal;
-    if(rolledBy !== MY_SEAT && rolledBy !== null && rolledBy !== undefined){
-      animDice(rolledBy, data.diceVal, ()=>{
-        G.rolled = true;
-        refreshUI();
-        renderTokens();
-        updateTurnBanner();
-      });
-      return;
-    }
-  } else {
-    G.diceVal = data.diceVal;
-  }
-
-  refreshUI();
-  renderTokens();
-  updateTurnBanner();
-}
-
-// ── Push game state to Firebase ───────────────────────────────────────────────
-let _pushDebounce = null;
-async function pushGameState(extra={}){
-  setSyncStatus("warn");
-  const payload = {
-    turn: G.turn,
-    diceVal: G.diceVal,
-    rolled: G.rolled,
-    waiting: G.waiting,
-    over: G.over,
-    sixes: G.sixes,
-    tokens: G.tokens,
-    placements: G.placements,
-    actionBy: MY_SEAT,
-    timestamp: serverTimestamp(),
-    ...extra
-  };
-  try{
-    await update(gameRef, payload);
-    setSyncStatus("ok");
-  } catch(e){
-    setSyncStatus("err");
-    showToast("Sync error - reconnecting...");
-  }
-}
-
-// ── Leave room ────────────────────────────────────────────────────────────────
-window.leaveRoom = async function(){
-  _listeners.forEach(fn=>fn());
-  _listeners = [];
-  if(ROOM_CODE && MY_SEAT !== null){
-    await set(ref(db, `rooms/${ROOM_CODE}/players/${MY_SEAT}/online`), false);
-  }
-  ROOM_CODE = null; MY_SEAT = null; IS_HOST = false;
-  Object.keys(_tokEls).forEach(k=>_removeTokEl(k));
-  document.getElementById("game-wrap").style.display = "none";
-  document.getElementById("status-row").style.display = "none";
-  document.getElementById("win").classList.remove("show");
-  document.getElementById("pause-overlay").classList.remove("show");
-  document.getElementById("lobby").style.display = "flex";
-  closeModals();
-};
-
-window.backToLobby = window.leaveRoom;
-
-// ══════════════════════════════════════════════════════════════════════════════
-// GAME ENGINE (ported from offline version with online sync)
-// ══════════════════════════════════════════════════════════════════════════════
+const STEP_MAIN_END      = 51;
+const STEP_STRETCH_START = 52;
+const STEP_DONE          = 57; // step 57 = goti ghar pahunchi, center triangle mein dikhe
 
 const homeZones=[{r0:0,c0:0,col:PINK},{r0:0,c0:9,col:BLUE},{r0:9,c0:0,col:YELLOW},{r0:9,c0:9,col:GREEN}];
 const inHome=(r,c)=>{for(const h of homeZones)if(r>=h.r0&&r<h.r0+6&&c>=h.c0&&c<h.c0+6)return h.col;return null;};
@@ -848,14 +514,17 @@ const MAIN_PATH=[
 ];
 
 const PATH=new Set(MAIN_PATH.map(([r,c])=>`${r}-${c}`));
+
 const ENTRY_CELL={[PINK]:[6,1],[BLUE]:[1,8],[GREEN]:[8,13],[YELLOW]:[13,6]};
 const ENTRY={};
 for(const [color,[er,ec]] of Object.entries(ENTRY_CELL)){
   const idx=MAIN_PATH.findIndex(([r,c])=>r===er&&c===ec);
+  if(idx===-1)throw new Error(`Entry cell not found for ${color}`);
   ENTRY[color]=idx;
 }
 
 const SAFE=new Set([...GREY_STARS,...COLOR_STARS]);
+// Entry cells are safe — landing on your own entry square cannot be captured.
 Object.values(ENTRY_CELL).forEach(([r,c])=>SAFE.add(`${r}-${c}`));
 
 const STRETCH={
@@ -865,12 +534,9 @@ const STRETCH={
   [YELLOW]:[[13,7],[12,7],[11,7],[10,7],[9,7],[8,7]],
 };
 
-const HOME_CORNER={[PINK]:[0,0],[BLUE]:[0,9],[GREEN]:[9,9],[YELLOW]:[9,0]};
-
 function getCell(pid,step){
-  if(step<=0||step>=STEP_DONE) return null;
-  const color=PLAYERS[pid]?.color;
-  if(!color) return null;
+  if(step<=0||step>=STEP_DONE)return null;
+  const color=PLAYERS[pid].color;
   const entry=ENTRY[color];
   if(step<=STEP_MAIN_END){
     const idx=(entry+step-1)%MAIN_PATH.length;
@@ -881,6 +547,26 @@ function getCell(pid,step){
   return(s&&si>=0&&si<s.length)?s[si]:null;
 }
 
+let G={
+  turn:3,
+  diceVal:null,
+  rolled:false,
+  waiting:false,
+  over:false,
+  sixes:0,
+  tokens:[],
+  placements:[], // ordered list of pids who finished, for ranking display
+};
+
+function initTokens(){
+  G.tokens=[];
+  for(let pid=0;pid<4;pid++){
+    if(!PLAYERS[pid].active) continue;
+    for(let tid=0;tid<4;tid++)
+      G.tokens.push({pid,tid,step:0});
+  }
+}
+
 const tokOf=(pid,tid)=>G.tokens.find(t=>t.pid===pid&&t.tid===tid);
 const toksOf=(pid)=>G.tokens.filter(t=>t.pid===pid);
 
@@ -888,35 +574,213 @@ function movable(pid,dv){
   return toksOf(pid).filter(t=>{
     if(t.step===0) return dv===6;
     if(t.step>=STEP_DONE) return false;
+
     if(t.step>=STEP_STRETCH_START){
       const targetStep=t.step+dv;
       if(targetStep>STEP_DONE) return false;
       return true;
     }
+
     const targetStep=t.step+dv;
     if(targetStep>STEP_DONE) return false;
+
+    // Block rule: if any intermediate or destination cell has 2+ enemy tokens, path is blocked
     for(let s=t.step+1;s<=targetStep&&s<=STEP_MAIN_END;s++){
       const rc=getCell(pid,s);
-      if(!rc) continue;
+      if(!rc)continue;
       const ck=`${rc[0]}-${rc[1]}`;
-      if(SAFE.has(ck)) continue;
+      if(SAFE.has(ck))continue; // safe cells cannot block
       const enemies=G.tokens.filter(o=>{
-        if(o.pid===pid||o.step===0||o.step>=STEP_DONE) return false;
+        if(o.pid===pid||o.step===0||o.step>=STEP_DONE)return false;
         const oc=getCell(o.pid,o.step);
         return oc&&`${oc[0]}-${oc[1]}`===ck;
       });
-      if(enemies.length>=2) return false;
+      if(enemies.length>=2)return false; // blocked by enemy double-stack
     }
+
     return true;
   });
 }
 
+const HOME_CORNER={[PINK]:[0,0],[BLUE]:[0,9],[GREEN]:[9,9],[YELLOW]:[9,0]};
+
 function tokRC(tok){
-  if(tok.step<=0||tok.step>=STEP_DONE) return null;
-  return getCell(tok.pid,tok.step)||null;
+  const color=PLAYERS[tok.pid].color;
+  if(tok.step<=0) return null;
+  if(tok.step>=STEP_DONE)return null;
+  const c=getCell(tok.pid,tok.step);
+  return c||null;
 }
 
-// ── Board build ───────────────────────────────────────────────────────────────
+let _cpx=0,_ox=0,_oy=0,_cacheValid=false;
+function _refreshCache(){
+  if(_cacheValid)return;
+  _cacheValid=true;
+  const b=document.getElementById("board"),l=document.getElementById("tokens-layer");
+  if(b){const s=parseFloat(getComputedStyle(b).getPropertyValue("--cell"));if(s>0)_cpx=s;}
+  if(!_cpx)_cpx=Math.min(window.innerWidth*0.058,window.innerHeight*0.054,40);
+  if(b&&l){const br=b.getBoundingClientRect(),lr=l.getBoundingClientRect();_ox=br.left-lr.left;_oy=br.top-lr.top;}
+}
+function cellPx(){return _cpx||Math.min(window.innerWidth*0.058,window.innerHeight*0.054,40);}
+function boardOffset(){return{x:_ox,y:_oy};}
+const GAP=1,PAD=5; // FIX: matches board CSS padding:5px exactly
+
+
+
+function rcToXY(r,c){
+  const cp=cellPx();
+  const off=boardOffset();
+  return{
+    x: off.x + PAD + c*(cp+GAP) + cp/2,
+    y: off.y + PAD + r*(cp+GAP) + cp/2
+  };
+}
+
+const _slotPxCache={};
+const _invalidateSlotCache=()=>{Object.keys(_slotPxCache).forEach(k=>delete _slotPxCache[k]);_cacheValid=false;};
+window.addEventListener("resize",()=>{_invalidateSlotCache();});
+
+function baseCirclePx(homeR, homeC, slotIdx){
+  const ck=`${homeR},${homeC},${slotIdx}`;
+  if(_slotPxCache[ck])return _slotPxCache[ck];
+  const layer=document.getElementById("tokens-layer");
+  const el=document.querySelector(`[data-slot="${ck}"]`);
+  if(el&&layer){
+    const eR=el.getBoundingClientRect();
+    const lR=layer.getBoundingClientRect();
+    const r={x:eR.left-lR.left+eR.width/2,y:eR.top-lR.top+eR.height/2};
+    _slotPxCache[ck]=r;
+    return r;
+  }
+  const cp=cellPx();
+  const off=boardOffset();
+  const zoneX=off.x+PAD+homeC*(cp+GAP);
+  const zoneY=off.y+PAD+homeR*(cp+GAP);
+  const zoneW=6*cp+5*GAP;
+  const zoneH=zoneW;
+  const wbW=zoneW*0.74;
+  const wbH=zoneH*0.74;
+  const wbX=zoneX+(zoneW-wbW)/2;
+  const wbY=zoneY+(zoneH-wbH)/2;
+  const pad=wbW*0.10;
+  const gap=wbW*0.10;
+  const cellW=(wbW-2*pad-gap)/2;
+  const cellH=(wbH-2*pad-gap)/2;
+  const col=slotIdx%2;
+  const row=Math.floor(slotIdx/2);
+  return{x:wbX+pad+col*(cellW+gap)+cellW/2,y:wbY+pad+row*(cellH+gap)+cellH/2};
+}
+
+// ── Dice 3D ───────────────────────────────────────────────────────────────────
+const DOTS={1:["cc"],2:["tl","br"],3:["tl","cc","br"],4:["tl","tr","bl","br"],5:["tl","tr","cc","bl","br"],6:["tl","tr","ml","mr","bl","br"]};
+const DOT_POS={tl:{top:"13%",left:"13%"},tr:{top:"13%",right:"13%"},ml:{top:"50%",left:"13%",transform:"translateY(-50%)"},mr:{top:"50%",right:"13%",transform:"translateY(-50%)"},bl:{bottom:"13%",left:"13%"},br:{bottom:"13%",right:"13%"},cc:{top:"50%",left:"50%",transform:"translate(-50%,-50%)"}};
+const FACE_DEFS=[{n:1,bg:"linear-gradient(145deg,#fff,#f5ebd8)",tf:"rotateY(0deg)"},{n:6,bg:"linear-gradient(145deg,#e8dfc8,#d5c9a8)",tf:"rotateY(180deg)"},{n:2,bg:"linear-gradient(145deg,#ede4cc,#ddd0ac)",tf:"rotateY(90deg)"},{n:5,bg:"linear-gradient(145deg,#ede4cc,#ddd0ac)",tf:"rotateY(-90deg)"},{n:3,bg:"linear-gradient(145deg,#fff,#f8f0de)",tf:"rotateX(90deg)"},{n:4,bg:"linear-gradient(145deg,#d8d0b4,#c8bc98)",tf:"rotateX(-90deg)"}];
+const LAND={1:{rx:0,ry:0},2:{rx:0,ry:-90},3:{rx:-90,ry:0},4:{rx:90,ry:0},5:{rx:0,ry:90},6:{rx:0,ry:180}};
+const dAcc={rx:{},ry:{},busy:{},last:{}};
+
+function rng(){if(window.crypto&&crypto.getRandomValues){const a=new Uint8Array(1);while(true){crypto.getRandomValues(a);if(a[0]<252)return(a[0]%6)+1;}}return Math.floor(Math.random()*6)+1;}
+function eio(t){return t<.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;}
+function lerp(a,b,t){return a+(b-a)*t;}
+function arcY(t){if(t<.82){const p=t/.82;return-52*4*p*(1-p);}const p=(t-.82)/.18;return 4*Math.sin((1-Math.pow(1-p,3))*Math.PI);}
+function sqX(t){if(t<.82)return 1;const p=(t-.82)/.18;return p<.4?lerp(1,1.14,p/.4):lerp(1.14,1,(1-Math.pow(1-(p-.4)/.6,3)));}
+function sqY(t){if(t<.82)return 1;const p=(t-.82)/.18;return p<.4?lerp(1,.82,p/.4):lerp(.82,1,(1-Math.pow(1-(p-.4)/.6,3)));}
+
+// SOUND_SYNCED: dice anim = 480ms, sound hits timed to match exactly
+function animDice(pid,finalVal,cb){
+  const cube=document.getElementById(`dcube-${pid}`);
+  if(!cube){dAcc.busy[pid]=false;if(cb)cb();return;}
+  if(dAcc.busy[pid]){setTimeout(()=>animDice(pid,finalVal,cb),50);return;}
+  dAcc.busy[pid]=true;
+  const tg=LAND[finalVal];
+  const curRx=dAcc.rx[pid]||0,curRy=dAcc.ry[pid]||0;
+  const normRx=((curRx%360)+360)%360,normRy=((curRy%360)+360)%360;
+  if(Math.abs(curRx)>5000)dAcc.rx[pid]=normRx;
+  if(Math.abs(curRy)>5000)dAcc.ry[pid]=normRy;
+  const dX=((tg.rx-normRx)%360+360)%360,dY=((tg.ry-normRy)%360+360)%360;
+  const eRx=curRx+360+dX,eRy=curRy+360+dY;
+  let t0=null;
+  // Ease: fast spin first 65%, then slow settle last 35% — matches sound rumble decay
+  function diceEase(t){
+    if(t<0.65){const p=t/0.65;return eio(p)*0.88;}
+    const p=(t-0.65)/0.35;return 0.88+0.12*(1-Math.pow(1-p,3));
+  }
+  function tick(now){
+    if(!t0)t0=now;
+    const t=Math.min((now-t0)/DICE_DUR_MS,1);
+    const ease=diceEase(t);
+    const rx=lerp(normRx,eRx,ease),ry=lerp(normRy,eRy,ease);
+    const sx=sqX(t),sy=sqY(t);
+    cube.style.transform=`translateY(${arcY(t)*1.3}px) rotateX(${rx}deg) rotateY(${ry}deg) scaleX(${sx}) scaleY(${sy})`;
+    if(t<1){requestAnimationFrame(tick);}
+    else{
+      cube.style.transform=`rotateX(${eRx}deg) rotateY(${eRy}deg) scaleX(1) scaleY(1)`;
+      dAcc.rx[pid]=eRx;dAcc.ry[pid]=eRy;dAcc.last[pid]=finalVal;
+      dAcc.busy[pid]=false;
+      if(cb)cb();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+function makeDice(pid){
+  const TZ=19;
+  const wrap=document.createElement("div");
+  wrap.className="dice-3d inactive";
+  wrap.id=`d3d-${pid}`;
+  const cube=document.createElement("div");
+  cube.className="dice-cube";
+  cube.id=`dcube-${pid}`;
+  FACE_DEFS.forEach(({n,bg,tf})=>{
+    const f=document.createElement("div");
+    f.className="dice-face lc";
+    f.style.cssText=`background:${bg};transform:${tf} translateZ(${TZ}px);`;
+    const shine=document.createElement("div");
+    shine.className="face-shine";
+    f.appendChild(shine);
+    (DOTS[n]||[]).forEach(pos=>{
+      const dot=document.createElement("div");
+      dot.className="ddot";
+      const ps=DOT_POS[pos];
+      if(ps)Object.assign(dot.style,ps);
+      f.appendChild(dot);
+    });
+    cube.appendChild(f);
+  });
+  wrap.appendChild(cube);
+  wrap.addEventListener("click",function(){
+    if(this.classList.contains("off")||this.classList.contains("inactive"))return;
+    onHumanRoll();
+  });
+  return wrap;
+}
+
+// SVG cache — avoid rebuilding identical SVGs on every render
+const _svgCache = new Map();
+function tokSVG(color,size=28){
+  const cacheKey = `${color}|${size}`;
+  if(_svgCache.has(cacheKey)) return _svgCache.get(cacheKey);
+  const dk=(hex)=>{const n=parseInt(hex.slice(1),16);const r=Math.max(0,(n>>16)-50);const g=Math.max(0,((n>>8)&0xff)-50);const b=Math.max(0,(n&0xff)-50);return`#${((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1)}`;};
+  const sh=dk(color);
+  const id=`t${color.replace("#","")}`;
+  const svg = `<svg width="${size}" height="${Math.round(size*1.3)}" viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="${id}p" cx="35%" cy="30%" r="65%"><stop offset="0%" stop-color="white" stop-opacity=".6"/><stop offset="35%" stop-color="${color}"/><stop offset="100%" stop-color="${sh}"/></radialGradient>
+      <radialGradient id="${id}i" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="white" stop-opacity=".9"/><stop offset="50%" stop-color="white" stop-opacity=".5"/><stop offset="100%" stop-color="${color}" stop-opacity=".3"/></radialGradient>
+      <filter id="${id}f" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="rgba(0,0,0,.5)"/></filter>
+    </defs>
+    <g filter="url(#${id}f)">
+      <path d="M50,8 C27,8 12,24 12,42 C12,62 50,122 50,122 C50,122 88,62 88,42 C88,24 73,8 50,8 Z" fill="url(#${id}p)"/>
+      <path d="M50,8 C27,8 12,24 12,42 C12,62 50,122 50,122 C50,122 88,62 88,42 C88,24 73,8 50,8 Z" stroke="${sh}" stroke-width="2" fill="none"/>
+      <circle cx="50" cy="40" r="19" fill="url(#${id}i)"/>
+      <circle cx="50" cy="40" r="19" stroke="${sh}" stroke-width="1.5" fill="none"/>
+      <ellipse cx="42" cy="31" rx="6" ry="4" fill="white" opacity=".4" transform="rotate(-20,42,31)"/>
+    </g>
+  </svg>`;
+  _svgCache.set(cacheKey, svg);
+  return svg;
+}
+
+// ── Build board ───────────────────────────────────────────────────────────────
 function buildBoard(){
   const el=document.getElementById("board");
   el.innerHTML="";
@@ -926,7 +790,7 @@ function buildBoard(){
       const hc=inHome(r,c);
       if(hc){
         const isRoot=homeZones.some(h=>h.r0===r&&h.c0===c);
-        if(!isRoot) continue;
+        if(!isRoot)continue;
         const d=document.createElement("div");
         d.className="lc";
         d.style.cssText=`grid-column:${c+1}/span 6;grid-row:${r+1}/span 6;`;
@@ -958,6 +822,7 @@ function buildBoard(){
       }
       const d=document.createElement("div");
       d.className="lc";
+      d.dataset.r=r;d.dataset.c=c;
       d.style.cssText=`grid-column:${c+1};grid-row:${r+1};`;
       if(COLOR_STARS.has(k)){
         const bg=STAR_BG[k]||DEF;
@@ -992,48 +857,17 @@ function buildBoard(){
   }
 }
 
-// ── Build player panels ────────────────────────────────────────────────────────
-// Layout: each player sees themselves at BOTTOM-LEFT
-// Seat layout on screen:
-//   TOP-ROW:    seat1 (top-left) | [pause] | seat2 (top-right)  [from local POV: these are opponents]
-//   BOT-ROW:    seat3 (bot-left) = HOST    | seat0 (bot-right)  [seat 3 = my seat for host]
-//
-// But from ANY player's perspective, THEY should see their panel at bottom-left.
-// We achieve this by rearranging which panel goes where based on MY_SEAT:
-//
-// MY_SEAT=3: 
-//   top-left=seat1, top-right=seat2, bot-left=seat3(ME), bot-right=seat0
-// MY_SEAT=0:
-//   top-left=seat2, top-right=seat3, bot-left=seat0(ME), bot-right=seat1
-// MY_SEAT=1:
-//   top-left=seat3, top-right=seat0, bot-left=seat1(ME), bot-right=seat2
-// MY_SEAT=2:
-//   top-left=seat0, top-right=seat1, bot-left=seat2(ME), bot-right=seat3
-
-function getPanelSeats(){
-  const me = MY_SEAT !== null ? MY_SEAT : 3;
-  // Positions: [topLeft, topRight, botLeft(ME), botRight]
-  const order = [
-    (me+2)%4, // top-left = opposite
-    (me+1)%4, // top-right = right opponent (clockwise)
-    me,       // bot-left = ME
-    (me+3)%4  // bot-right = left opponent
-  ];
-  return order;
-}
-
+// ── Build player panels ───────────────────────────────────────────────────────
 function buildPlayers(){
   const top=document.getElementById("top-row");
   const bot=document.getElementById("bot-row");
   top.innerHTML="";bot.innerHTML="";
 
-  const seats = getPanelSeats();
-  // seats[0]=topLeft, seats[1]=topRight, seats[2]=botLeft(me), seats[3]=botRight
-
-  // Top row: left panel, pause btn, right panel
-  if(PLAYERS[seats[0]]?.active) top.appendChild(makePanel(seats[0],"left","top"));
+  // Always build all 4 slots but inactive ones are invisible placeholders
+  if(PLAYERS[0].active) top.appendChild(makePanel(0,"left","top"));
   else top.appendChild(makePlaceholder("left"));
 
+  // Pause button in the middle of top row
   const pauseBtn=document.createElement("button");
   pauseBtn.id="btn-pause";
   pauseBtn.title="Pause";
@@ -1041,15 +875,28 @@ function buildPlayers(){
   pauseBtn.onclick=togglePause;
   top.appendChild(pauseBtn);
 
-  if(PLAYERS[seats[1]]?.active) top.appendChild(makePanel(seats[1],"right","top"));
+  if(PLAYERS[1].active) top.appendChild(makePanel(1,"right","top"));
   else top.appendChild(makePlaceholder("right"));
 
-  // Bot row: left panel (me), right panel
-  if(PLAYERS[seats[2]]?.active) bot.appendChild(makePanel(seats[2],"left","bot",true));
+  if(PLAYERS[3].active) bot.appendChild(makePanel(3,"left","bot"));
   else bot.appendChild(makePlaceholder("left"));
 
-  if(PLAYERS[seats[3]]?.active) bot.appendChild(makePanel(seats[3],"right","bot"));
+  if(PLAYERS[2].active) bot.appendChild(makePanel(2,"right","bot"));
   else bot.appendChild(makePlaceholder("right"));
+
+  // Build status-row: back | turn-label | mute
+  const sr=document.getElementById("status-row");
+  sr.innerHTML="";sr.style.display="flex";
+  const backBtn=document.createElement("button");
+  backBtn.id="btn-back";backBtn.title="Main Menu";backBtn.textContent="🏠";
+  backBtn.onclick=()=>{if(confirm("Leave game?"))location.reload();};
+  const turnLbl=document.createElement("div");
+  turnLbl.id="turn-banner";
+  turnLbl.style.cssText="flex:1;text-align:center;font-size:.75rem;font-family:'Nunito',sans-serif;color:rgba(240,240,255,.5);letter-spacing:1px;";
+  const muteBtn=document.createElement("button");
+  muteBtn.id="btn-mute";muteBtn.title="Mute";muteBtn.textContent="🔊";
+  muteBtn.onclick=()=>SFX.toggleMute();
+  sr.appendChild(backBtn);sr.appendChild(turnLbl);sr.appendChild(muteBtn);
 }
 
 function makePlaceholder(side){
@@ -1059,30 +906,20 @@ function makePlaceholder(side){
   return col;
 }
 
-function makePanel(pid,side,pos,isMe=false){
+function makePanel(pid,side,pos){
   const p=PLAYERS[pid];
-  if(!p) return makePlaceholder(side);
   const col=document.createElement("div");
   col.className=`pcol ${side}`;
 
   const lbl=document.createElement("span");
   lbl.className="plabel";
   lbl.id=`lbl-${pid}`;
-  // Perspective: my token shows as BLUE tint label
-  lbl.textContent=p.label+(isMe?" (You)":"");
+  lbl.textContent=p.label;
 
   const box=document.createElement("div");
   box.className="pbox";
   box.id=`pbox-${pid}`;
   box.style.flexDirection=side==="left"?"row":"row-reverse";
-  box.style.position="relative";
-
-  if(isMe){
-    const badge=document.createElement("div");
-    badge.className="you-badge";
-    badge.textContent="YOU";
-    box.appendChild(badge);
-  }
 
   const bg=document.createElement("div");
   bg.className="pbox-bg";
@@ -1091,13 +928,10 @@ function makePanel(pid,side,pos,isMe=false){
   shine.className="pbox-shine";
   bg.appendChild(shine);
 
-  // Perspective: show player's actual color, but highlight in blue for self
-  const displayColor = isMe ? PLAYER_BLUE : p.color;
-
   const tokW=document.createElement("div");
   tokW.className="pbox-tok";
   tokW.style[side==="left"?"marginLeft":"marginRight"]="4px";
-  tokW.innerHTML=tokSVG(displayColor, 36);
+  tokW.innerHTML=tokSVG(p.color,36);
 
   const diceW=document.createElement("div");
   diceW.className="pbox-dice";
@@ -1116,118 +950,11 @@ function makePanel(pid,side,pos,isMe=false){
   return col;
 }
 
-// ── Dice 3D ───────────────────────────────────────────────────────────────────
-const DOTS={1:["cc"],2:["tl","br"],3:["tl","cc","br"],4:["tl","tr","bl","br"],5:["tl","tr","cc","bl","br"],6:["tl","tr","ml","mr","bl","br"]};
-const DOT_POS={tl:{top:"13%",left:"13%"},tr:{top:"13%",right:"13%"},ml:{top:"50%",left:"13%",transform:"translateY(-50%)"},mr:{top:"50%",right:"13%",transform:"translateY(-50%)"},bl:{bottom:"13%",left:"13%"},br:{bottom:"13%",right:"13%"},cc:{top:"50%",left:"50%",transform:"translate(-50%,-50%)"}};
-const FACE_DEFS=[{n:1,bg:"linear-gradient(145deg,#fff,#f5ebd8)",tf:"rotateY(0deg)"},{n:6,bg:"linear-gradient(145deg,#e8dfc8,#d5c9a8)",tf:"rotateY(180deg)"},{n:2,bg:"linear-gradient(145deg,#ede4cc,#ddd0ac)",tf:"rotateY(90deg)"},{n:5,bg:"linear-gradient(145deg,#ede4cc,#ddd0ac)",tf:"rotateY(-90deg)"},{n:3,bg:"linear-gradient(145deg,#fff,#f8f0de)",tf:"rotateX(90deg)"},{n:4,bg:"linear-gradient(145deg,#d8d0b4,#c8bc98)",tf:"rotateX(-90deg)"}];
-const LAND={1:{rx:0,ry:0},2:{rx:0,ry:-90},3:{rx:-90,ry:0},4:{rx:90,ry:0},5:{rx:0,ry:90},6:{rx:0,ry:180}};
-const dAcc={rx:{},ry:{},busy:{},last:{}};
-
-function rng(){if(window.crypto&&crypto.getRandomValues){const a=new Uint8Array(1);while(true){crypto.getRandomValues(a);if(a[0]<252)return(a[0]%6)+1;}}return Math.floor(Math.random()*6)+1;}
-function eio(t){return t<.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;}
-function lerp(a,b,t){return a+(b-a)*t;}
-function arcY(t){if(t<.82){const p=t/.82;return-52*4*p*(1-p);}const p=(t-.82)/.18;return 4*Math.sin((1-Math.pow(1-p,3))*Math.PI);}
-function sqX(t){if(t<.82)return 1;const p=(t-.82)/.18;return p<.4?lerp(1,1.14,p/.4):lerp(1.14,1,(1-Math.pow(1-(p-.4)/.6,3)));}
-function sqY(t){if(t<.82)return 1;const p=(t-.82)/.18;return p<.4?lerp(1,.82,p/.4):lerp(.82,1,(1-Math.pow(1-(p-.4)/.6,3)));}
-
-function animDice(pid,finalVal,cb){
-  const cube=document.getElementById(`dcube-${pid}`);
-  if(!cube){dAcc.busy[pid]=false;if(cb)cb();return;}
-  if(dAcc.busy[pid]){setTimeout(()=>animDice(pid,finalVal,cb),50);return;}
-  dAcc.busy[pid]=true;
-  const tg=LAND[finalVal];
-  const curRx=dAcc.rx[pid]||0, curRy=dAcc.ry[pid]||0;
-  const normRx=((curRx%360)+360)%360, normRy=((curRy%360)+360)%360;
-  if(Math.abs(curRx)>5000){dAcc.rx[pid]=normRx;}
-  if(Math.abs(curRy)>5000){dAcc.ry[pid]=normRy;}
-  const dX=((tg.rx-normRx)%360+360)%360, dY=((tg.ry-normRy)%360+360)%360;
-  const eRx=curRx+360+dX, eRy=curRy+360+dY;
-  const DUR=300; let t0=null;
-  function eioElastic(t){if(t<0.7)return eio(t/0.7)*0.92;const p=(t-0.7)/0.3;return 0.92+0.08*(1-Math.pow(1-p,3));}
-  setTimeout(()=>{
-    function tick(now){
-      if(!t0)t0=now;const t=Math.min((now-t0)/DUR,1);
-      const ease=eioElastic(t);
-      const rx=lerp(normRx,eRx,ease),ry=lerp(normRy,eRy,ease);
-      cube.style.transform=`translateY(${arcY(t)*1.3}px) rotateX(${rx}deg) rotateY(${ry}deg)`;
-      cube.style.scale=`${sqX(t)} ${sqY(t)}`;
-      if(t<1){requestAnimationFrame(tick);}
-      else{
-        cube.style.transform=`rotateX(${eRx}deg) rotateY(${eRy}deg)`;
-        cube.style.scale="1.12";
-        dAcc.rx[pid]=eRx; dAcc.ry[pid]=eRy; dAcc.last[pid]=finalVal;
-        setTimeout(()=>{
-          cube.style.transition="scale 0.18s cubic-bezier(0.36,0.07,0.19,0.97)";
-          cube.style.transform=`rotateX(${eRx}deg) rotateY(${eRy}deg)`;
-          cube.style.scale="1";
-          setTimeout(()=>{cube.style.transition="";cube.style.scale="1";dAcc.busy[pid]=false;if(cb)cb();},190);
-        },30);
-      }
-    }
-    requestAnimationFrame(tick);
-  },30);
-}
-
-function makeDice(pid){
-  const TZ=19;
-  const wrap=document.createElement("div");
-  wrap.className="dice-3d inactive";
-  wrap.id=`d3d-${pid}`;
-  const cube=document.createElement("div");
-  cube.className="dice-cube";
-  cube.id=`dcube-${pid}`;
-  FACE_DEFS.forEach(({n,bg,tf})=>{
-    const f=document.createElement("div");
-    f.className="dice-face lc";
-    f.style.cssText=`background:${bg};transform:${tf} translateZ(${TZ}px);`;
-    const shine=document.createElement("div");
-    shine.className="face-shine";
-    f.appendChild(shine);
-    (DOTS[n]||[]).forEach(pos=>{
-      const dot=document.createElement("div");
-      dot.className="ddot";
-      const ps=DOT_POS[pos];
-      if(ps) Object.assign(dot.style,ps);
-      f.appendChild(dot);
-    });
-    cube.appendChild(f);
-  });
-  wrap.appendChild(cube);
-  wrap.addEventListener("click",function(){
-    if(this.classList.contains("off")||this.classList.contains("inactive")) return;
-    onHumanRoll();
-  });
-  return wrap;
-}
-
-function tokSVG(color,size=28){
-  const dk=(hex)=>{const n=parseInt(hex.slice(1),16);const r=Math.max(0,(n>>16)-50);const g=Math.max(0,((n>>8)&0xff)-50);const b=Math.max(0,(n&0xff)-50);return`#${((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1)}`;};
-  const sh=dk(color);
-  const id=`t${color.replace("#","")}`;
-  return `<svg width="${size}" height="${Math.round(size*1.3)}" viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="${id}p" cx="35%" cy="30%" r="65%"><stop offset="0%" stop-color="white" stop-opacity=".6"/><stop offset="35%" stop-color="${color}"/><stop offset="100%" stop-color="${sh}"/></radialGradient>
-      <radialGradient id="${id}i" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="white" stop-opacity=".9"/><stop offset="50%" stop-color="white" stop-opacity=".5"/><stop offset="100%" stop-color="${color}" stop-opacity=".3"/></radialGradient>
-      <filter id="${id}f" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="rgba(0,0,0,.5)"/></filter>
-    </defs>
-    <g filter="url(#${id}f)">
-      <path d="M50,8 C27,8 12,24 12,42 C12,62 50,122 50,122 C50,122 88,62 88,42 C88,24 73,8 50,8 Z" fill="url(#${id}p)"/>
-      <path d="M50,8 C27,8 12,24 12,42 C12,62 50,122 50,122 C50,122 88,62 88,42 C88,24 73,8 50,8 Z" stroke="${sh}" stroke-width="2" fill="none"/>
-      <circle cx="50" cy="40" r="19" fill="url(#${id}i)"/>
-      <circle cx="50" cy="40" r="19" stroke="${sh}" stroke-width="1.5" fill="none"/>
-      <ellipse cx="42" cy="31" rx="6" ry="4" fill="white" opacity=".4" transform="rotate(-20,42,31)"/>
-    </g>
-  </svg>`;
-}
-
-// Perspective-aware token color: my tokens shown in BLUE, others in their real color
-function getTokenDisplayColor(pid){
-  if(MY_SEAT !== null && pid === MY_SEAT) return PLAYER_BLUE;
-  return PLAYERS[pid]?.color || "#888";
-}
-
 // ── Token element cache ───────────────────────────────────────────────────────
-const _tokEls={};
+// Elements are created once and reused. Position via transform:translate()
+// so the browser composites on the GPU — zero layout reflow per frame.
+const _tokEls={}; // "pid-tid" → {wrap, shadow, movHandler}
+
 function _ensureTokEl(tok,color){
   const key=`${tok.pid}-${tok.tid}`;
   const layer=document.getElementById("tokens-layer");
@@ -1238,157 +965,233 @@ function _ensureTokEl(tok,color){
     wrap.className="tok";
     wrap.dataset.id=key;
     wrap.innerHTML=tokSVG(color,28);
+    // Ludo King point ring — sits below token tip
+    const ring=document.createElement("div");
+    ring.className="tok-ring";
+    ring.style.display="none";
     layer.appendChild(shadow);
+    layer.appendChild(ring);
     layer.appendChild(wrap);
-    _tokEls[key]={wrap,shadow,movHandler:null};
+    _tokEls[key]={wrap,shadow,ring,movHandler:null};
   }
   return _tokEls[key];
 }
+
 function _removeTokEl(key){
-  if(_tokEls[key]){_tokEls[key].wrap.remove();_tokEls[key].shadow.remove();delete _tokEls[key];}
-}
-
-// ── Render tokens ─────────────────────────────────────────────────────────────
-let _cpx=0,_ox=0,_oy=0,_cacheValid=false;
-function _refreshCache(){
-  if(_cacheValid) return;
-  _cacheValid=true;
-  const b=document.getElementById("board"),l=document.getElementById("tokens-layer");
-  if(b){const s=parseFloat(getComputedStyle(b).getPropertyValue("--cell"));if(s>0)_cpx=s;}
-  if(!_cpx)_cpx=Math.min(window.innerWidth*0.058,window.innerHeight*0.054,40);
-  if(b&&l){const br=b.getBoundingClientRect(),lr=l.getBoundingClientRect();_ox=br.left-lr.left;_oy=br.top-lr.top;}
-}
-function cellPx(){return _cpx||Math.min(window.innerWidth*0.058,window.innerHeight*0.054,40);}
-function boardOffset(){return{x:_ox,y:_oy};}
-const GAP=1,PAD=6;
-function rcToXY(r,c){
-  const cp=cellPx(),off=boardOffset();
-  return{x:off.x+PAD+c*(cp+GAP)+cp/2,y:off.y+PAD+r*(cp+GAP)+cp/2};
-}
-
-const _slotPxCache={};
-function baseCirclePx(homeR,homeC,slotIdx){
-  const ck=`${homeR},${homeC},${slotIdx}`;
-  if(_slotPxCache[ck]) return _slotPxCache[ck];
-  const layer=document.getElementById("tokens-layer");
-  const el=document.querySelector(`[data-slot="${ck}"]`);
-  if(el&&layer){
-    const eR=el.getBoundingClientRect(),lR=layer.getBoundingClientRect();
-    const r={x:eR.left-lR.left+eR.width/2,y:eR.top-lR.top+eR.height/2};
-    _slotPxCache[ck]=r;
-    return r;
+  if(_tokEls[key]){
+    _tokEls[key].wrap.remove();
+    _tokEls[key].shadow.remove();
+    if(_tokEls[key].ring)_tokEls[key].ring.remove();
+    delete _tokEls[key];
   }
-  const cp=cellPx(),off=boardOffset();
-  const zoneX=off.x+PAD+homeC*(cp+GAP), zoneY=off.y+PAD+homeR*(cp+GAP);
-  const zoneW=6*cp+5*GAP, zoneH=zoneW;
-  const wbW=zoneW*0.74, wbH=zoneH*0.74;
-  const wbX=zoneX+(zoneW-wbW)/2, wbY=zoneY+(zoneH-wbH)/2;
-  const pad=wbW*0.10, gap=wbW*0.10, cellW=(wbW-2*pad-gap)/2, cellH=(wbH-2*pad-gap)/2;
-  const col=slotIdx%2, row=Math.floor(slotIdx/2);
-  return{x:wbX+pad+col*(cellW+gap)+cellW/2,y:wbY+pad+row*(cellH+gap)+cellH/2};
 }
 
+// ── Trail pool (fix #6: reuse up to 10 trail elements) ────────────────────────
+const _trailPool=[];
+const MAX_TRAILS=10;
+function _getTrail(){
+  return _trailPool.pop()||(() => {
+    const t=document.createElement("div");
+    t.className="tok-trail";
+    return t;
+  })();
+}
+function _releaseTrail(t){
+  t.remove();
+  if(_trailPool.length<MAX_TRAILS)_trailPool.push(t);
+}
+
+// ── Render tokens on board ────────────────────────────────────────────────────
+let _renderScheduled = false;
 function renderTokens(){
+  if(_renderScheduled) return;
+  _renderScheduled = true;
+  requestAnimationFrame(()=>{ _renderScheduled=false; _doRenderTokens(); });
+}
+function _doRenderTokens(){
   _refreshCache();
   const cp=cellPx();
   const movSet=new Set();
-  // Only show movable highlights for MY tokens on MY turn
-  if(G.waiting&&!G.over&&G.turn===MY_SEAT){
+  if(G.waiting&&!G.over){
     movable(G.turn,G.diceVal).forEach(t=>movSet.add(`${t.pid}-${t.tid}`));
   }
+
+  // Group map for stacking logic
   const groups={};
   G.tokens.forEach(tok=>{
-    if(tok.step<=0||tok.step>=STEP_DONE) return;
+    if(tok.step<=0||tok.step>=STEP_DONE)return;
     const rc=tokRC(tok);
-    if(!rc) return;
+    if(!rc)return;
     const key=`${rc[0]}-${rc[1]}`;
-    if(!groups[key]) groups[key]=[];
+    if(!groups[key])groups[key]=[];
     groups[key].push(tok);
   });
+
   const BASE_W=Math.round(cp*1.15);
+  // Ludo King style: tokens on same cell arranged in a 2x2 grid offset, scaled down
   const sizeScale=n=>n<=1?1:n<=2?0.78:0.65;
+  // offsets for up to 4 tokens: 2x2 mini grid
   const stackOffset=(n,idx,cp)=>{
-    if(n<=1) return{dx:0,dy:0};
+    if(n<=1)return{dx:0,dy:0};
     const gap=cp*0.22;
-    if(n===2) return idx===0?{dx:-gap*0.5,dy:0}:{dx:gap*0.5,dy:0};
-    const col=idx%2,row=Math.floor(idx/2);
-    return{dx:(col-0.5)*gap,dy:(row-0.5)*gap};
+    if(n===2){
+      return idx===0?{dx:-gap*0.5,dy:0}:{dx:gap*0.5,dy:0};
+    }
+    // 3 or 4: 2x2 grid
+    const col=idx%2, row=Math.floor(idx/2);
+    return{dx:(col-0.5)*gap, dy:(row-0.5)*gap};
   };
+
   const alive=new Set();
+
   G.tokens.forEach(tok=>{
-    const color=getTokenDisplayColor(tok.pid);
+    const color=PLAYERS[tok.pid].color;
     const isMovable=movSet.has(`${tok.pid}-${tok.tid}`);
     const key=`${tok.pid}-${tok.tid}`;
-    let px,py,scale=1,stackCount=1;
+    let px,py,scale=1;
+    let stackCount=1; // how many tokens share this cell
+
     if(tok.step===0){
-      const hColor=PLAYERS[tok.pid]?.color;
-      if(!hColor) return;
-      const [hr,hc]=HOME_CORNER[hColor];
+      const [hr,hc]=HOME_CORNER[color];
       const bp=baseCirclePx(hr,hc,tok.tid);
-      px=bp.x;py=bp.y;scale=1.02;
+      px=bp.x; py=bp.y; scale=1.02;
     } else if(tok.step>=STEP_DONE){
-      const centerRC=[7,7];
-      const cxy=rcToXY(centerRC[0],centerRC[1]);
-      const cp2=cellPx(),half=cp2*1.5;
-      const hColor=PLAYERS[tok.pid]?.color;
-      const offsets={[PINK]:{dx:-half*0.60,dy:0},[BLUE]:{dx:0,dy:-half*0.60},[GREEN]:{dx:half*0.60,dy:0},[YELLOW]:{dx:0,dy:half*0.60}};
-      const off=offsets[hColor]||{dx:0,dy:0};
-      const doneOfPid=G.tokens.filter(t=>t.pid===tok.pid&&t.step>=STEP_DONE);
-      const doneIdx=doneOfPid.findIndex(t=>t.tid===tok.tid);
-      const spread=cp2*0.18,angles=[Math.PI*1.25,Math.PI*0.75,Math.PI*1.75,Math.PI*0.25];
-      const ang=angles[doneIdx]||0;
-      px=cxy.x+off.dx+(doneIdx>0?Math.cos(ang)*spread:0);
-      py=cxy.y+off.dy+(doneIdx>0?Math.sin(ang)*spread:0);
-      scale=0.55;stackCount=2;
+      // Center triangle — tokens at WIDE BASE (away from center, toward outer edge)
+      // PINK=left  → tip points LEFT,  base faces RIGHT → tokens go LEFT  → dx: -baseR
+      // BLUE=top   → tip points UP,    base faces DOWN  → tokens go UP    → dy: -baseR
+      // GREEN=right→ tip points RIGHT, base faces LEFT  → tokens go RIGHT → dx: +baseR
+      // YELLOW=bot → tip points DOWN,  base faces UP    → tokens go DOWN  → dy: +baseR
+      const cxy=rcToXY(7,7);
+      const cp2=cellPx();
+      const baseR = cp2 * 0.72;
+      const colorAnchor = {
+        [PINK]:  {dx:-baseR, dy: 0},
+        [BLUE]:  {dx: 0,     dy:-baseR},
+        [GREEN]: {dx: baseR, dy: 0},
+        [YELLOW]:{dx: 0,     dy: baseR},
+      };
+      const anchor = colorAnchor[color] || {dx:0,dy:0};
+      const doneOfPid = G.tokens.filter(t=>t.pid===tok.pid&&t.step>=STEP_DONE);
+      const doneIdx = doneOfPid.findIndex(t=>t.tid===tok.tid);
+      const microGap = cp2 * 0.20;
+      const gridOff = [
+        {dx:-microGap*0.5, dy:-microGap*0.5},
+        {dx: microGap*0.5, dy:-microGap*0.5},
+        {dx:-microGap*0.5, dy: microGap*0.5},
+        {dx: microGap*0.5, dy: microGap*0.5},
+      ];
+      const go = gridOff[doneIdx] || {dx:0,dy:0};
+      px = cxy.x + anchor.dx + go.dx;
+      py = cxy.y + anchor.dy + go.dy;
+      scale = 0.75;
+      stackCount = 2; // hide shadow
     } else {
       const rc=tokRC(tok);
-      if(!rc) return;
+      if(!rc)return;
       const rcKey=`${rc[0]}-${rc[1]}`;
       const grp=groups[rcKey]||[tok];
       const idx=grp.indexOf(tok);
       const n=grp.length;
-      stackCount=n;scale=sizeScale(n);
+      stackCount=n;
+      scale=sizeScale(n);
       const off=stackOffset(n,idx,cp);
       const xy=rcToXY(rc[0],rc[1]);
-      px=xy.x+off.dx;py=xy.y+off.dy;
+      px=xy.x+off.dx;
+      py=xy.y+off.dy;
     }
+
     alive.add(key);
-    const rW=BASE_W*scale,rH=rW*(130/100),tipOffset=rH*(122/130);
-    const tx=px-rW/2,ty=py-tipOffset;
+
+    const rW=BASE_W; // Always use BASE_W for SVG — use CSS scale for stacking
+    const visualScale=scale; // actual visual scale via CSS
+    const rH=rW*(130/100);
+    const tipOffset=rH*(122/130);
+    // translate to (px - rW/2, py - tipOffset) — GPU composited, no reflow
+    const tx=px-rW/2;
+    const ty=py-tipOffset;
+
     const els=_ensureTokEl(tok,color);
     const {wrap,shadow}=els;
+
+    // Fix #1 (flicker): Always use BASE_W for SVG, apply visual scale via CSS transform
+    // This avoids SVG rebuild mid-animation causing size flash
     const curW=parseFloat(wrap.dataset.rw||"0");
-    if(Math.abs(curW-rW)>0.5){wrap.innerHTML=tokSVG(color,rW);wrap.dataset.rw=rW;}
-    wrap.style.transform=`translate(${tx}px,${ty}px)`;
-    const shadowW=rW*0.60,shadowH=rW*0.16,sx=px-shadowW/2,sy=py-shadowH/2+1;
+    if(Math.abs(curW-rW)>0.5){
+      wrap.innerHTML=tokSVG(color,rW);
+      wrap.dataset.rw=rW;
+    }
+
+    // Apply visual scale via CSS transform origin center-bottom of token tip
+    const scaleTransform = visualScale !== 1 ? ` scale(${visualScale})` : '';
+    // Only set if not currently being animated (animation guard)
+    if(!wrap.dataset.animating){
+      wrap.style.transform=`translate(${tx}px,${ty}px)${scaleTransform}`;
+      wrap.style.transformOrigin=`${rW/2}px ${tipOffset}px`;
+    }
+
+    // Shadow — only show for lone tokens on board, hide when stacked or in home/center
+    const shadowW=rW*0.60*visualScale, shadowH=rW*0.16*visualScale;
+    const sx=px-shadowW/2, sy=py-shadowH/2+1;
     shadow.style.transform=`translate(${sx}px,${sy}px)`;
-    shadow.style.width=`${shadowW}px`;shadow.style.height=`${shadowH}px`;
-    const showShadow=tok.step>0&&tok.step<STEP_DONE&&stackCount===1;
+    shadow.style.width=`${shadowW}px`;
+    shadow.style.height=`${shadowH}px`;
+    const showShadow = tok.step>0 && tok.step<STEP_DONE && stackCount===1;
     shadow.style.opacity=showShadow?"1":"0";
+    // Shadow blur — more blur when token is in home (larger visual presence)
+    shadow.style.filter = showShadow ? 'blur(3px)' : 'blur(2px)';
+
+    // Set glow color CSS var for movable ring animation
+    wrap.style.setProperty('--tok-glow', color + 'cc');
+
+    // Movable state — swap handler without cloning the node
     const wasMovable=wrap.classList.contains("movable");
     if(isMovable!==wasMovable){
       wrap.classList.toggle("movable",isMovable);
-      if(els.movHandler){wrap.removeEventListener("click",els.movHandler);els.movHandler=null;}
-      if(isMovable){els.movHandler=()=>onTokClick(tok.pid,tok.tid);wrap.addEventListener("click",els.movHandler);}
+      if(els.movHandler){
+        wrap.removeEventListener("click",els.movHandler);
+        els.movHandler=null;
+      }
+      if(isMovable){
+        els.movHandler=()=>onTokClick(tok.pid,tok.tid);
+        wrap.addEventListener("click",els.movHandler);
+      }
+    }
+
+    // Ludo King point ring — black ring at token tip, only when movable on board
+    if(els.ring){
+      const showRing = isMovable && tok.step<STEP_DONE;
+      if(showRing){
+        const ringSz = rW * 0.62;
+        // Position centered at token tip (bottom point)
+        const rx = px - ringSz/2;
+        const ry = py - ringSz/2;
+        els.ring.style.cssText=`position:absolute;left:0;top:0;width:${ringSz}px;height:${ringSz}px;border-radius:50%;pointer-events:none;--tr-base:translate(${rx}px,${ry}px);background:conic-gradient(rgba(0,0,0,0.85) 0deg 60deg,transparent 60deg 120deg,rgba(0,0,0,0.85) 120deg 180deg,transparent 180deg 240deg,rgba(0,0,0,0.85) 240deg 300deg,transparent 300deg 360deg);-webkit-mask:radial-gradient(farthest-side,transparent 55%,black 56%);mask:radial-gradient(farthest-side,transparent 55%,black 56%);animation:tokRingSpin 0.9s linear infinite;display:block;`;
+      } else {
+        els.ring.style.display="none";
+      }
     }
   });
-  for(const key of Object.keys(_tokEls)){if(!alive.has(key))_removeTokEl(key);}
-}
+
+  // Clean up elements for tokens no longer visible
+  for(const key of Object.keys(_tokEls)){
+    if(!alive.has(key))_removeTokEl(key);
+  }
+} // end _doRenderTokens
 
 function refreshUI(){
+  const banner=document.getElementById("turn-banner");
+  if(banner) banner.textContent="";
   PLAYERS.forEach(p=>{
     const active=G.turn===p.id&&!G.over;
     const bg=document.getElementById(`pbg-${p.id}`);
     const lbl=document.getElementById(`lbl-${p.id}`);
     const box=document.getElementById(`pbox-${p.id}`);
     const d3d=document.getElementById(`d3d-${p.id}`);
-    if(bg) bg.style.borderColor=active?p.color:"#333";
-    if(lbl) lbl.style.color=active?p.color:"white";
-    if(box) box.style.outline=active?`2px solid ${p.color}`:"none";
+    if(bg)bg.style.borderColor=active?p.color:"#333";
+    if(lbl)lbl.style.color=active?p.color:"white";
+    if(box)box.style.outline=active?`2px solid ${p.color}`:"none";
     if(d3d){
-      // Dice active only for current player AND it's MY turn
-      const isMyTurn = G.turn === MY_SEAT && p.id === MY_SEAT;
-      if(active && isMyTurn){
+      if(active){
         d3d.classList.remove("inactive");
         const canRoll=!G.rolled&&!G.over;
         d3d.classList.toggle("off",!canRoll);
@@ -1397,344 +1200,24 @@ function refreshUI(){
         d3d.classList.remove("off");
       }
       const cube=document.getElementById(`dcube-${p.id}`);
-      if(cube&&dAcc.last[p.id]==null&&!dAcc.busy[p.id]&&!G.rolled){
+      // Bug Fix: sirf tab reset karo jab dice bilkul fresh ho (first show) — agar busy ya rolled hai to KABHI mat touch karo
+      if(cube && dAcc.last[p.id]==null && !dAcc.busy[p.id] && !G.rolled){
         const tg=LAND[6];
         cube.style.transition="none";
         cube.style.transform=`rotateX(${tg.rx}deg) rotateY(${tg.ry}deg)`;
         cube.style.scale="1";
-        dAcc.rx[p.id]=tg.rx;dAcc.ry[p.id]=tg.ry;dAcc.last[p.id]=6;
+        dAcc.rx[p.id]=tg.rx;
+        dAcc.ry[p.id]=tg.ry;
+        dAcc.last[p.id]=6;
       }
     }
   });
 }
 
-function updateTurnBanner(){
-  const banner=document.getElementById("turn-banner");
-  if(!banner) return;
-  if(G.over){banner.textContent="Game Over";return;}
-  const isMyTurn = G.turn === MY_SEAT;
-  const turnName = PLAYERS[G.turn]?.label || "...";
-  if(isMyTurn){
-    banner.textContent = G.rolled ? "Choose a token!" : "Your turn — Roll!";
-    banner.style.color = "var(--gold)";
-  } else {
-    banner.textContent = `${turnName}'s turn`;
-    banner.style.color = "var(--muted)";
-  }
-}
-
-// ── Game flow ─────────────────────────────────────────────────────────────────
-function onHumanRoll(){
-  if(G.rolled||G.over||G_PAUSED) return;
-  if(G.turn !== MY_SEAT) return; // Not my turn
-  doRoll(G.turn);
-}
-
-function doRoll(pid){
-  if(_rolling) return;
-  _rolling=true;
-  const d3d=document.getElementById(`d3d-${pid}`);
-  if(d3d) d3d.classList.add("off");
-  const v=rng();
-  G.rolled=true;
-  G.diceVal=v;
-  // Push dice roll to Firebase immediately so others see animation
-  pushGameState({ lastAction:"roll", diceVal:v });
-  animDice(pid,v,()=>{_rolling=false;afterRoll(pid,v);});
-}
-
-function shouldAutoMove(mv,v){
-  if(mv.length===0) return false;
-  if(mv.length===1) return true;
-  const destCells=mv.map(t=>{
-    const targetStep=t.step===0?1:t.step+v;
-    if(targetStep<=0||targetStep>=STEP_DONE) return `done-${t.pid}`;
-    const cell=getCell(t.pid,targetStep);
-    return cell?`${cell[0]}-${cell[1]}`:`step-${targetStep}`;
-  });
-  const allSame=destCells.every(d=>d===destCells[0]);
-  if(!allSame) return false;
-  const destKey=destCells[0];
-  const wouldCapture=mv.map(t=>{
-    if(SAFE.has(destKey)) return false;
-    const enemies=G.tokens.filter(o=>{
-      if(o.pid===t.pid||o.step===0||o.step>=STEP_DONE) return false;
-      const oc=getCell(o.pid,o.step);
-      return oc&&`${oc[0]}-${oc[1]}`===destKey;
-    });
-    const allies=G.tokens.filter(o=>{
-      if(o.pid!==t.pid||o.tid===t.tid||o.step===0||o.step>=STEP_DONE) return false;
-      const oc=getCell(o.pid,o.step);
-      return oc&&`${oc[0]}-${oc[1]}`===destKey;
-    });
-    return enemies.length>0&&allies.length===0;
-  });
-  if(wouldCapture.some(Boolean)!==wouldCapture.every(Boolean)) return false;
-  return true;
-}
-
-function afterRoll(pid,v){
-  if(v===6){
-    G.sixes=(G.sixes||0)+1;
-    if(G.sixes>=3){
-      G.sixes=0;G.rolled=false;G.diceVal=null;G.waiting=false;_rolling=false;
-      renderTokens();
-      setTimeout(async()=>{nextTurn(false); await pushGameState({lastAction:"skip3six"});},300);
-      return;
-    }
-  } else { G.sixes=0; }
-  const mv=movable(pid,v);
-  if(mv.length===0){
-    renderTokens();refreshUI();
-    setTimeout(async()=>{nextTurn(false); await pushGameState({lastAction:"noMove"});},300);
-    return;
-  }
-  if(shouldAutoMove(mv,v)){
-    setTimeout(async()=>await doMove(pid,mv[0].tid,v),80);
-    return;
-  }
-  G.waiting=true;
-  renderTokens();
-  updateTurnBanner();
-}
-
-async function onTokClick(pid,tid){
-  if(!G.waiting||pid!==G.turn||G.over||G_PAUSED) return;
-  if(pid !== MY_SEAT) return; // Can only click my own tokens
-  const mv=movable(pid,G.diceVal);
-  if(!mv.find(t=>t.tid===tid)) return;
-  G.waiting=false;
-  await doMove(pid,tid,G.diceVal);
-}
-
-function rafDelay(ms){
-  return new Promise(resolve=>{
-    const start=performance.now();
-    function tick(now){if(now-start>=ms)resolve();else requestAnimationFrame(tick);}
-    requestAnimationFrame(tick);
-  });
-}
-
-const JUMP_MS=160;
-
-function jumpStep(el,shadowEl,startX,startY,endX,endY,rW,cp){
-  return new Promise(resolve=>{
-    const rH=rW*(130/100),tipOffset=rH*(122/130);
-    const shadowW=rW*0.60,shadowH=rW*0.16;
-    const h=cp*0.65;
-    let t0=null;
-    function tick(now){
-      if(!t0) t0=now;
-      let t=(now-t0)/JUMP_MS;
-      if(t>1) t=1;
-      const et=t<0.5?2*t*t:-1+(4-2*t)*t;
-      const x=startX+(endX-startX)*et,y=startY+(endY-startY)*et;
-      const jump=-4*h*t*(1-t);
-      el.style.transform=`translate(${x-rW/2}px,${y-tipOffset+jump}px)`;
-      if(shadowEl){
-        const shadowScale=1-0.3*(1-Math.abs(2*t-1));
-        shadowEl.style.transform=`translate(${x-shadowW/2}px,${y-shadowH/2+1}px) scaleX(${shadowScale})`;
-      }
-      if(t<1) requestAnimationFrame(tick);
-      else resolve();
-    }
-    requestAnimationFrame(tick);
-  });
-}
-
-async function animateMove(tok,steps){
-  const key=`${tok.pid}-${tok.tid}`;
-  _refreshCache();
-  const cp=cellPx(),BASE_W=Math.round(cp*1.15);
-  for(let i=0;i<steps;i++){
-    if(tok.step>=STEP_DONE) break;
-    const prevCell=getCell(tok.pid,tok.step);
-    if(!prevCell){tok.step++;continue;}
-    const startXY=rcToXY(prevCell[0],prevCell[1]);
-    tok.step++;
-    if(tok.step>STEP_DONE) tok.step=STEP_DONE;
-    if(tok.step>=STEP_DONE){renderTokens();await rafDelay(120);break;}
-    const rc=getCell(tok.pid,tok.step);
-    if(!rc) continue;
-    const endXY=rcToXY(rc[0],rc[1]);
-    const els=_tokEls[key];
-    if(!els) continue;
-    els.wrap.style.zIndex="20";
-    els.wrap.style.transition="";
-    if(els.shadow) els.shadow.style.transition="";
-    await jumpStep(els.wrap,els.shadow,startXY.x,startXY.y,endXY.x,endXY.y,BASE_W,cp);
-    els.wrap.style.zIndex="";
-  }
-}
-
-async function sendHomeFast(tok){
-  const color=PLAYERS[tok.pid]?.color;
-  if(!color) return;
-  const [hr,hc]=HOME_CORNER[color];
-  const cacheKey=`${tok.pid}-${tok.tid}`;
-  const el=(_tokEls[cacheKey]||{}).wrap||null;
-  const layer=document.getElementById("tokens-layer");
-  if(el){
-    const m=el.style.transform.match(/translate\(([^,]+),([^)]+)\)/);
-    const bx=m?m[1]:"0px",by=m?m[2]:"0px";
-    for(let r=0;r<2;r++){
-      const ring=document.createElement("div");
-      const size=36+r*10,mx=parseFloat(bx)-size/2+14,my=parseFloat(by)-size/2+14;
-      ring.style.cssText=`position:absolute;transform:translate(${mx}px,${my}px) scale(0.3);--rx:${mx}px;--ry:${my}px;width:${size}px;height:${size}px;border-radius:50%;border:${3-r}px solid ${r===0?'white':color};opacity:0;pointer-events:none;animation:ringPop ${0.35+r*0.12}s ${r*0.07}s ease-out forwards;`;
-      layer.appendChild(ring);setTimeout(()=>ring.remove(),600);
-    }
-    el.style.transition="transform 0.14s cubic-bezier(0.36,0.07,0.19,0.97),opacity 0.14s";
-    el.style.transform=`translate(${m?m[1]:"0px"},${m?m[2]:"0px"}) scale(1.7)`;
-    el.style.opacity="0";
-    await rafDelay(150);
-    el.style.transition="none";el.style.opacity="1";
-  }
-  tok.step=0;
-  renderTokens();await rafDelay(10);
-  const bp=baseCirclePx(hr,hc,tok.tid);
-  const sparkColors=[color,"white","#FFD700",color];
-  for(let i=0;i<4;i++){
-    const sp=document.createElement("div");
-    const angle=(i/4)*Math.PI*2,dist=22+Math.random()*14;
-    const sx=Math.cos(angle)*dist,sy=Math.sin(angle)*dist,sz=3+Math.random()*4;
-    const stx=`translate(${bp.x-sz/2}px,${bp.y-sz/2}px)`;
-    sp.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;background:${sparkColors[i%sparkColors.length]};box-shadow:0 0 4px ${sparkColors[i%sparkColors.length]};pointer-events:none;--st:${stx};--sx:${sx}px;--sy:${sy}px;--sd:${0.45+Math.random()*0.2}s;animation:sparkleFly var(--sd) ${i*0.03}s ease-out forwards;`;
-    layer.appendChild(sp);setTimeout(()=>sp.remove(),800);
-  }
-}
-
-async function doMove(pid,tid,v){
-  const tok=tokOf(pid,tid);
-  if(!tok) return;
-  const allowed=movable(pid,v);
-  if(!allowed.find(t=>t.tid===tid)) return;
-  if(tok.step>=STEP_STRETCH_START&&tok.step+v>STEP_DONE) return;
-
-  let bonus=false;
-  const diceWasSix=(v===6);
-
-  if(tok.step===0&&v===6){
-    tok.step=1;bonus=diceWasSix;
-    renderTokens();await rafDelay(50);
-    const entryCellKey=getCell(pid,1);
-    if(entryCellKey){
-      const eck=`${entryCellKey[0]}-${entryCellKey[1]}`;
-      if(!SAFE.has(eck)) await checkAndPit(eck,pid,tok.tid);
-    }
-  } else {
-    await animateMove(tok,v);
-    bonus=diceWasSix;
-  }
-
-  if(tok.step>=STEP_DONE){
-    tok.step=STEP_DONE;renderTokens();await rafDelay(100);
-    if(toksOf(pid).every(t=>t.step>=STEP_DONE)){
-      if(!G.placements.includes(pid)) G.placements.push(pid);
-      renderTokens();
-      const remaining=PLAYERS.filter(p=>p.active&&!G.placements.includes(p.id));
-      if(remaining.length<=1){
-        if(remaining.length===1&&!G.placements.includes(remaining[0].id))
-          G.placements.push(remaining[0].id);
-        G.over=true;
-        await pushGameState({lastAction:"win"});
-        endGame();return;
-      }
-      bonus=false;
-    } else { bonus=true; }
-  }
-
-  let captured=false;
-  async function checkAndPit(cellKey,movingPid,movingTid){
-    const ownOnCell=G.tokens.filter(o=>{
-      if(o.pid!==movingPid||o.step===0||o.step>=STEP_DONE) return false;
-      const oc=getCell(o.pid,o.step);
-      return oc&&`${oc[0]}-${oc[1]}`===cellKey;
-    });
-    const enemiesOnCell=G.tokens.filter(o=>{
-      if(o.pid===movingPid||o.step===0||o.step>=STEP_DONE) return false;
-      const oc=getCell(o.pid,o.step);
-      return oc&&`${oc[0]}-${oc[1]}`===cellKey;
-    });
-    if(ownOnCell.length>=2) return;
-    if(ownOnCell.length===1&&enemiesOnCell.length>=1){
-      await sendHomeFast(enemiesOnCell[0]);
-      captured=true;
-    }
-  }
-
-  if(tok.step>=2&&tok.step<=STEP_MAIN_END+1){
-    const prevStep=tok.step-v;
-    if(prevStep>=1&&prevStep<=STEP_MAIN_END){
-      const prevCell=getCell(pid,prevStep);
-      if(prevCell&&!SAFE.has(`${prevCell[0]}-${prevCell[1]}`))
-        await checkAndPit(`${prevCell[0]}-${prevCell[1]}`,pid,tok.tid);
-    }
-  }
-  if(tok.step>=1&&tok.step<=STEP_MAIN_END){
-    const cell=getCell(pid,tok.step);
-    if(cell&&!SAFE.has(`${cell[0]}-${cell[1]}`))
-      await checkAndPit(`${cell[0]}-${cell[1]}`,pid,tok.tid);
-  }
-
-  if(captured) bonus=true;
-
-  renderTokens();await rafDelay(60);
-  nextTurn(bonus);
-
-  // Push final state to Firebase after move completes
-  await pushGameState({lastAction:"move",movedPid:pid,movedTid:tid});
-}
-
-function nextTurn(same){
-  G.rolled=false;_rolling=false;G.diceVal=null;G.waiting=false;
-  if(!same){
-    G.turn=(G.turn+1)%PLAYERS.length;
-    let tries=0;
-    while((!PLAYERS[G.turn].active||toksOf(G.turn).every(t=>t.step>=STEP_DONE))&&tries<PLAYERS.length){
-      G.turn=(G.turn+1)%PLAYERS.length;tries++;
-    }
-    if(!PLAYERS[G.turn].active||toksOf(G.turn).every(t=>t.step>=STEP_DONE)) return;
-  }
-  if(same){
-    const pid=G.turn;
-    if(dAcc.busy[pid]) dAcc.busy[pid]=false;
-    refreshUI();
-    PLAYERS.forEach(p=>{
-      const d3d=document.getElementById(`d3d-${p.id}`);
-      const bg=document.getElementById(`pbg-${p.id}`);
-      const lbl=document.getElementById(`lbl-${p.id}`);
-      const box=document.getElementById(`pbox-${p.id}`);
-      const active=G.turn===p.id&&!G.over;
-      if(bg) bg.style.borderColor=active?p.color:"#333";
-      if(lbl) lbl.style.color=active?p.color:"white";
-      if(box) box.style.outline=active?`2px solid ${p.color}`:"none";
-      if(d3d){
-        const isMyTurn=G.turn===MY_SEAT&&p.id===MY_SEAT;
-        if(active&&isMyTurn){d3d.classList.remove("inactive","off");}
-        else{d3d.classList.add("inactive");d3d.classList.remove("off");}
-      }
-    });
-  } else { refreshUI(); }
-  renderTokens();
-  updateTurnBanner();
-}
-
-function endGame(){
-  G.over=true;
-  const medals=["🥇","🥈","🥉","4️⃣"];
-  const lines=G.placements.map((pid,i)=>{
-    const name=PLAYERS[pid]?.label||`P${pid}`;
-    return `${medals[i]||"  "} ${name}`;
-  });
-  const winner=G.placements[0];
-  const heading=`🎉 ${PLAYERS[winner]?.label||"Winner"} Wins!`;
-  document.getElementById("win-msg").textContent=heading;
-  document.getElementById("win-places").textContent=lines.join("\n");
-  document.getElementById("win").classList.add("show");
-}
 
 let G_PAUSED=false;
-window.togglePause=function(){
+
+function togglePause(){
   if(G.over) return;
   G_PAUSED=!G_PAUSED;
   const overlay=document.getElementById("pause-overlay");
@@ -1745,16 +1228,968 @@ window.togglePause=function(){
   } else {
     overlay.classList.remove("show");
     if(btn){btn.innerHTML="&#10074;&#10074;";btn.title="Pause";}
+    // All human — nothing to auto-resume
   }
-};
+}
+
+function goBack(){
+  G_PAUSED=false;
+  document.getElementById("pause-overlay").classList.remove("show");
+  const btn=document.getElementById("btn-pause");
+  if(btn) btn.innerHTML="&#10074;&#10074;";
+  document.getElementById("startup").style.display="flex";
+  G.over=true;
+}
+
+// ── Game flow ─────────────────────────────────────────────────────────────────
+function onHumanRoll(){
+  if(G.rolled||G.over||G_PAUSED)return;
+  doRoll(G.turn);
+}
+
+let _rolling=false; // guard against double-roll race condition
+
+function doRoll(pid){
+  if(_rolling)return;
+  _rolling=true;
+  // Disable dice immediately — before rng() — to block any same-frame double tap
+  const d3d=document.getElementById(`d3d-${pid}`);
+  if(d3d)d3d.classList.add("off");
+  const v=rng();
+  G.rolled=true;
+  G.diceVal=v;
+  setTimeout(()=>SFX.diceRoll(), 0);
+  animDice(pid,v,()=>{_rolling=false;afterRoll(pid,v);});
+}
+
+// Smart auto-move: agar genuinely koi choice nahi toh auto move
+function shouldAutoMove(mv, v){
+  if(mv.length === 0) return false;
+  if(mv.length === 1) return true;
+  // Compare actual board cells so step=0 (entering at step 1) vs step=1 (moving to step 1+v) are distinguished correctly
+  const destCells = mv.map(t => {
+    const targetStep = t.step === 0 ? 1 : t.step + v;
+    if(targetStep <= 0 || targetStep >= STEP_DONE) return `done-${t.pid}`;
+    const cell = getCell(t.pid, targetStep);
+    return cell ? `${cell[0]}-${cell[1]}` : `step-${targetStep}`;
+  });
+  const allSame = destCells.every(d => d === destCells[0]);
+  if(!allSame) return false;
+  // Even if same destination cell, check if moves have different capture outcomes
+  // (one token might land on enemy, another already has an ally there — different stakes)
+  const destKey = destCells[0];
+  const wouldCapture = mv.map(t => {
+    if(SAFE.has(destKey)) return false;
+    const enemies = G.tokens.filter(o => {
+      if(o.pid===t.pid||o.step===0||o.step>=STEP_DONE) return false;
+      const oc = getCell(o.pid, o.step);
+      return oc && `${oc[0]}-${oc[1]}` === destKey;
+    });
+    const allies = G.tokens.filter(o => {
+      if(o.pid!==t.pid||o.tid===t.tid||o.step===0||o.step>=STEP_DONE) return false;
+      const oc = getCell(o.pid, o.step);
+      return oc && `${oc[0]}-${oc[1]}` === destKey;
+    });
+    return enemies.length > 0 && allies.length === 0;
+  });
+  if(wouldCapture.some(Boolean) !== wouldCapture.every(Boolean)) return false; // different capture outcomes
+  return true;
+}
+
+function afterRoll(pid,v){
+  // Bug #2 Fix: Teen sixes ka check yahaan hona chahiye — BEFORE any move attempt
+  // Taaki no-move cases mein bhi sixes count ho
+  if(v===6){
+    G.sixes=(G.sixes||0)+1;
+    if(G.sixes>=3){
+      G.sixes=0;
+      G.rolled=false;
+      G.diceVal=null;
+      G.waiting=false;
+      _rolling=false; // release roll guard so next player can roll
+      SFX.threeSixesSkip();
+      renderTokens();
+      setTimeout(()=>nextTurn(false),300);
+      return; // explicit: no move allowed on 3rd six
+    }
+    SFX.rolledSix();
+  } else {
+    G.sixes=0;
+  }
+
+  const mv=movable(pid,v);
+  if(mv.length===0){
+    SFX.noMove();
+    renderTokens(); // clear any movable highlights before switching
+    refreshUI();    // update dice state so it doesn't linger
+    setTimeout(()=>nextTurn(false),300); // slightly longer so player sees the roll result
+    return;
+  }
+  if(shouldAutoMove(mv, v)){
+    setTimeout(async()=>await doMove(pid,mv[0].tid,v),80);
+    return;
+  }
+  G.waiting=true;
+  renderTokens();
+}
+
+async function onTokClick(pid,tid){
+  if(!G.waiting||pid!==G.turn||G.over||G_PAUSED)return;
+  const mv=movable(pid,G.diceVal);
+  if(!mv.find(t=>t.tid===tid))return;
+  G.waiting=false;
+  // Hide all movable rings immediately on click
+  Object.values(_tokEls).forEach(e=>{ if(e.ring) e.ring.style.display="none"; });
+  await doMove(pid,tid,G.diceVal);
+}
+
+// rAF-aligned delay — waits for the next N milliseconds on a rAF boundary
+// so token animation stays in sync with the browser's paint cycle.
+function rafDelay(ms){
+  return new Promise(resolve=>{
+    const start=performance.now();
+    function tick(now){
+      if(now-start>=ms)resolve();
+      else requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+// ── Ludo King style: pure rAF jump physics — zero CSS transitions, zero trail DOM ──
+const JUMP_MS = 130; // ms per step
+const DICE_DUR_MS = 480;
+
+// Trail dot pool — reuse elements instead of creating new ones every step
+const _dotPool=[];
+const MAX_DOTS=20;
+function spawnTrailDot(x, y, color, layer){
+  let dot=_dotPool.pop();
+  if(!dot){
+    dot=document.createElement("div");
+    dot.style.cssText="position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;";
+  }
+  const sz=6+Math.random()*3;
+  dot.style.width=`${sz}px`;
+  dot.style.height=`${sz}px`;
+  dot.style.background=color;
+  dot.style.boxShadow=`0 0 4px ${color}88`;
+  dot.style.opacity="0.82";
+  dot.style.transition="none";
+  dot.style.transform=`translate(${x-sz/2}px,${y-sz/2}px)`;
+  layer.appendChild(dot);
+  setTimeout(()=>{ dot.style.transition="opacity 0.32s ease-out"; dot.style.opacity="0"; },20);
+  setTimeout(()=>{ dot.remove(); dot.style.transition="none"; if(_dotPool.length<MAX_DOTS)_dotPool.push(dot); },380);
+}
+
+// Trigger star cell glow on board cell element
+function flashStarCell(r,c){
+  const cell=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+  if(!cell)return;
+  cell.classList.add('star-land-glow');
+  setTimeout(()=>cell.classList.remove('star-land-glow'),750);
+}
+
+function jumpStep(el, shadowEl, startX, startY, endX, endY, rW, color, cp, layer) {
+  return new Promise(resolve => {
+    const rH = rW*(130/100);
+    const tipOffset = rH*(122/130);
+    const shadowW = rW*0.60, shadowH = rW*0.16;
+    const h = cp * 0.9; // arc height
+    let t0 = null;
+
+    // Spawn trail dot at the START cell (where token is coming FROM) — Ludo King style
+    if (layer) spawnTrailDot(startX, startY, color, layer);
+
+    function tick(now) {
+      if (!t0) t0 = now;
+      let t = (now - t0) / JUMP_MS;
+      if (t > 1) t = 1;
+      const et = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+      const x = startX + (endX - startX) * et;
+      const y = startY + (endY - startY) * et;
+      const jump = -4 * h * t * (1 - t);
+      const peakRatio = 1 - Math.abs(2*t - 1);
+
+      el.style.transform = `translate(${x - rW/2}px,${y - tipOffset + jump}px)`;
+
+      if (shadowEl) {
+        const shadowScale = 1 - 0.35 * peakRatio;
+        const blurAmount = 3 + peakRatio * 5;
+        const shadowOpacity = 1 - peakRatio * 0.4;
+        const sx = x - shadowW/2, sy = y - shadowH/2 + 1;
+        shadowEl.style.transform = `translate(${sx}px,${sy}px) scaleX(${shadowScale})`;
+        shadowEl.style.filter = `blur(${blurAmount.toFixed(1)}px)`;
+        shadowEl.style.opacity = shadowOpacity.toFixed(2);
+      }
+
+      if (t < 1) requestAnimationFrame(tick);
+      else resolve();
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+async function animateMove(tok, steps) {
+  const key = `${tok.pid}-${tok.tid}`;
+  const color = PLAYERS[tok.pid].color;
+  _refreshCache();
+  const cp = cellPx();
+  const BASE_W = Math.round(cp * 1.15);
+  const layer = document.getElementById('tokens-layer');
+
+  for (let i = 0; i < steps; i++) {
+    if (tok.step >= STEP_DONE) break;
+
+    const prevCell = getCell(tok.pid, tok.step);
+    if (!prevCell) { tok.step++; continue; }
+    const startXY = rcToXY(prevCell[0], prevCell[1]);
+
+    tok.step++;
+    if (tok.step > STEP_DONE) tok.step = STEP_DONE;
+
+    if (tok.step >= STEP_DONE) { renderTokens(); await rafDelay(120); break; }
+
+    // HomeStretch sound — exactly when token enters the colored home path
+    if (tok.step === STEP_STRETCH_START) SFX.homeStretch();
+
+    const rc = getCell(tok.pid, tok.step);
+    if (!rc) continue;
+    const endXY = rcToXY(rc[0], rc[1]);
+
+    // SOUND_SYNC: safeStar + cell glow fire together right after the last landing step
+    const cellKey = `${rc[0]}-${rc[1]}`;
+    const isStarCell = GREY_STARS.has(cellKey) || COLOR_STARS.has(cellKey);
+    if (i === steps - 1 && isStarCell) {
+      setTimeout(()=>{SFX.safeStar();flashStarCell(rc[0],rc[1]);},JUMP_MS+20);
+    }
+
+    const els = _tokEls[key];
+    if (!els) continue;
+
+    // Mark as animating so renderTokens won't override transform
+    els.wrap.dataset.animating = '1';
+
+    // Slide stacked neighbors with CSS (they're not jumping)
+    const prevKey = `${prevCell[0]}-${prevCell[1]}`;
+    const newKey = `${rc[0]}-${rc[1]}`;
+    G.tokens.forEach(other => {
+      if (other.pid === tok.pid && other.tid === tok.tid) return;
+      if (other.step <= 0 || other.step >= STEP_DONE) return;
+      const orc = getCell(other.pid, other.step); if (!orc) return;
+      const ok = `${orc[0]}-${orc[1]}`;
+      if (ok !== prevKey && ok !== newKey) return;
+      const oEls = _tokEls[`${other.pid}-${other.tid}`]; if (!oEls) return;
+      const grp = G.tokens.filter(t => {
+        if (t.step <= 0 || t.step >= STEP_DONE) return false;
+        const trc = getCell(t.pid, t.step);
+        return trc && `${trc[0]}-${trc[1]}` === ok;
+      });
+      const n = grp.length, idx = grp.indexOf(other);
+      // Fix #1: neighbor slides also use BASE_W + CSS scale, not scaled width
+      const sc = n <= 1 ? 1 : n <= 2 ? 0.78 : 0.65;
+      const gap = cp * 0.22;
+      let dx = 0, dy = 0;
+      if (n === 2) { dx = idx === 0 ? -gap*0.5 : gap*0.5; }
+      else if (n >= 3) { const col = idx%2, row = Math.floor(idx/2); dx = (col-0.5)*gap; dy = (row-0.5)*gap; }
+      const oH = BASE_W*(130/100), oTip = oH*(122/130);
+      const oxy = rcToXY(orc[0], orc[1]);
+      const scaleStr = sc !== 1 ? ` scale(${sc})` : '';
+      oEls.wrap.style.transition = `transform ${JUMP_MS}ms cubic-bezier(0.22,1,0.36,1)`;
+      oEls.wrap.style.transform = `translate(${oxy.x+dx-BASE_W/2}px,${oxy.y+dy-oTip}px)${scaleStr}`;
+      oEls.wrap.style.transformOrigin = `${BASE_W/2}px ${oTip}px`;
+      setTimeout(() => { if (oEls.wrap) oEls.wrap.style.transition = ""; }, JUMP_MS + 10);
+    });
+
+    els.wrap.style.zIndex = "20";
+    els.wrap.style.transition = "";
+    if (els.shadow) els.shadow.style.transition = "";
+
+    // Fire step sound at jump peak (~55% through) for tight audio-visual sync
+    setTimeout(() => SFX.tokenStep(), Math.round(JUMP_MS * 0.55));
+    await jumpStep(els.wrap, els.shadow, startXY.x, startXY.y, endXY.x, endXY.y, BASE_W, color, cp, layer);
+
+    delete els.wrap.dataset.animating;
+    els.wrap.style.zIndex = "";
+  }
+}
+
+async function sendHomeFast(tok){
+  const color=PLAYERS[tok.pid].color;
+  const [hr,hc]=HOME_CORNER[color];
+  const cacheKey=`${tok.pid}-${tok.tid}`;
+  const el=(_tokEls[cacheKey]||{}).wrap||null;
+  const shadowEl=(_tokEls[cacheKey]||{}).shadow||null;
+  const layer=document.getElementById("tokens-layer");
+
+  if(el){
+    // Kill effect — ring burst at capture position
+    const m=el.style.transform.match(/translate\(([^,]+),([^)]+)\)/);
+    const bx=m?m[1]:"0px",by=m?m[2]:"0px";
+    const cfT=`translate(${bx},${by})`;
+
+    // White flash ring burst (same as before)
+    for(let r=0;r<2;r++){
+      const ring=document.createElement("div");
+      const size=36+r*10;
+      const mx=parseFloat(bx)-size/2+14, my=parseFloat(by)-size/2+14;
+      ring.style.cssText=`position:absolute;transform:translate(${mx}px,${my}px) scale(0.3);--rx:${mx}px;--ry:${my}px;width:${size}px;height:${size}px;border-radius:50%;border:${3-r}px solid ${r===0?'white':color};opacity:0;pointer-events:none;animation:ringPop ${0.35+r*0.12}s ${r*0.07}s ease-out forwards;`;
+      layer.appendChild(ring);setTimeout(()=>ring.remove(),600);
+    }
+
+    // Scale & flash out
+    el.style.transition="transform 0.14s cubic-bezier(0.36,0.07,0.19,0.97),opacity 0.14s";
+    el.style.transform=`${cfT} scale(1.7)`;
+    el.style.opacity="0";
+    await rafDelay(150);
+    el.style.transition="none";
+    el.style.opacity="1";
+  }
+
+  // ── Fast rewind: slide step-by-step back to home, no jump arc ──
+  const _refreshCache2=()=>_refreshCache();
+  _refreshCache2();
+  const cp=cellPx();
+  const BASE_W=Math.round(cp*1.15);
+  const rH=BASE_W*(130/100);
+  const tipOffset=rH*(122/130);
+  const SLIDE_MS=55; // fast per-step, no jump
+
+  // Build reverse path from current step back to step 1
+  const stepsBack=[];
+  for(let s=tok.step;s>=1;s--) stepsBack.push(s);
+
+  for(let i=0;i<stepsBack.length;i++){
+    const fromStep=stepsBack[i];
+    const toStep=fromStep-1;
+    const fromCell=getCell(tok.pid,fromStep);
+    if(!fromCell)continue;
+
+    const els=_tokEls[cacheKey];
+    if(!els)break;
+
+    const startXY=rcToXY(fromCell[0],fromCell[1]);
+    let endXY;
+
+    if(toStep<=0){
+      // Final destination: home slot
+      endXY=baseCirclePx(hr,hc,tok.tid);
+    } else {
+      const toCell=getCell(tok.pid,toStep);
+      if(!toCell)continue;
+      endXY=rcToXY(toCell[0],toCell[1]);
+    }
+
+    tok.step=toStep;
+
+    // Straight CSS transition slide — no arc, no jump
+    await new Promise(resolve=>{
+      const tx=startXY.x-BASE_W/2, ty=startXY.y-tipOffset;
+      const ex=endXY.x-BASE_W/2, ey=endXY.y-tipOffset;
+      els.wrap.style.transition=`transform ${SLIDE_MS}ms linear`;
+      els.wrap.style.transform=`translate(${ex}px,${ey}px)`;
+      if(els.shadow){
+        const sw=BASE_W*0.60, sh=BASE_W*0.16;
+        els.shadow.style.transition=`transform ${SLIDE_MS}ms linear`;
+        els.shadow.style.transform=`translate(${endXY.x-sw/2}px,${endXY.y-sh/2+1}px)`;
+      }
+      setTimeout(()=>{
+        if(els.wrap)els.wrap.style.transition="";
+        if(els.shadow)els.shadow.style.transition="";
+        resolve();
+      },SLIDE_MS);
+    });
+  }
+
+  tok.step=0;
+  renderTokens();
+  await rafDelay(10);
+
+  // Sparkle burst at home position
+  const bp=baseCirclePx(hr,hc,tok.tid);
+  const sparkColors=[color,"white","#FFD700",color];
+  for(let i=0;i<4;i++){
+    const sp=document.createElement("div");
+    const angle=(i/4)*Math.PI*2;
+    const dist=22+Math.random()*14;
+    const sx=Math.cos(angle)*dist, sy=Math.sin(angle)*dist;
+    const sz=3+Math.random()*4;
+    const stx=`translate(${bp.x-sz/2}px,${bp.y-sz/2}px)`;
+    const sc=sparkColors[i%sparkColors.length];
+    sp.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;background:${sc};box-shadow:0 0 4px ${sc};pointer-events:none;--st:${stx};--sx:${sx}px;--sy:${sy}px;--sd:${0.45+Math.random()*0.2}s;animation:sparkleFly var(--sd) ${i*0.03}s ease-out forwards;`;
+    layer.appendChild(sp);setTimeout(()=>sp.remove(),800);
+  }
+
+  // Ring at home
+  const ring=document.createElement("div");
+  ring.style.cssText=`position:absolute;--rx:${bp.x-18}px;--ry:${bp.y-18}px;transform:translate(${bp.x-18}px,${bp.y-18}px) scale(0.2);width:36px;height:36px;border-radius:50%;border:3px solid ${color};opacity:0.9;pointer-events:none;animation:ringPop .45s ease-out forwards;`;
+  layer.appendChild(ring);setTimeout(()=>ring.remove(),500);
+}
+
+async function doMove(pid,tid,v){
+  const tok=tokOf(pid,tid);
+
+  // STRICT GUARD: only proceed if movable() approves this token
+  const allowed=movable(pid,v);
+  if(!allowed.find(t=>t.tid===tid)) return;
+
+  // Python logic: stretch mein sirf overshoot block, partial allowed
+  if(tok.step>=STEP_STRETCH_START){
+    if(tok.step+v>STEP_DONE) return; // overshoot block
+  }
+
+  let bonus=false;
+
+  const diceWasSix=(v===6);
+  // NOTE: G.sixes tracking has been moved to afterRoll() — do NOT track here again
+
+  if(tok.step===0&&v===6){
+    tok.step=1;
+    SFX.tokenSpawn();
+    bonus=diceWasSix;
+    renderTokens();
+    // Fix #9: Spawn bounce animation — token appears with scale(0)→scale(1.3)→scale(1)
+    await rafDelay(20);
+    const spawnKey=`${tok.pid}-${tok.tid}`;
+    const spawnEls=_tokEls[spawnKey];
+    if(spawnEls&&spawnEls.wrap){
+      const sw=spawnEls.wrap;
+      const curTransform=sw.style.transform||'';
+      // Animate: scale from 0 up to 1.3 then settle to 1
+      sw.style.transition='none';
+      const baseT=curTransform.replace(/\s*scale\([^)]*\)/g,'');
+      sw.style.transform=`${baseT} scale(0)`;
+      sw.style.transformOrigin=`${Math.round(cellPx()*1.15/2)}px ${Math.round(cellPx()*1.15*(130/100)*(122/130))}px`;
+      await rafDelay(16);
+      sw.style.transition='transform 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+      sw.style.transform=`${baseT} scale(1)`;
+      await rafDelay(370);
+      sw.style.transition='';
+    }
+    await new Promise(r=>setTimeout(r,30));
+    // Check for capture at entry cell — enemy on step 1 cell should be sent home
+    const entryCellKey=getCell(pid,1);
+    if(entryCellKey){
+      const eck=`${entryCellKey[0]}-${entryCellKey[1]}`;
+      if(!SAFE.has(eck)){
+        await checkAndPit(eck,pid,tok.tid);
+      }
+    }
+  } else {
+    await animateMove(tok,v);
+    bonus=diceWasSix;
+  }
+
+  if(tok.step>=STEP_DONE){
+    tok.step=STEP_DONE;
+    renderTokens();
+    await new Promise(r=>setTimeout(r,100));
+    if(toksOf(pid).every(t=>t.step>=STEP_DONE)){
+      if(!G.placements.includes(pid))G.placements.push(pid);
+      renderTokens();
+      const remaining=PLAYERS.filter(p=>p.active&&!G.placements.includes(p.id));
+      if(remaining.length<=1){
+        if(remaining.length===1&&!G.placements.includes(remaining[0].id))
+          G.placements.push(remaining[0].id);
+        endGame();
+        return;
+      }
+      // Sabke tokens ghar pahunch gaye — game khatam, koi bonus nahi
+      bonus=false;
+    } else {
+      // Ek token ghar pahuncha — extra turn milegi
+      SFX.tokenDone();
+      bonus=true;
+    }
+  }
+
+  // CAPTURE LOGIC
+  // Rule: Jo player move kare, sirf uski token check hoti hai.
+  // Move ke BAAD us cell pe (jahan se aayi = prev, aur jahan gayi = current) check:
+  //
+  // PREV CELL (jahan se token aayi):
+  //   - Agar move karne wale player ki 1 token bachi + koi bhi enemy wahan hai => uski pit
+  //   - Agar 2+ apni bachi => safe, kuch nahi
+  //
+  // CURRENT CELL (jahan token aayi):
+  //   - Agar move karne wale ki 1 token hai (abhi aayi, koi apni nahi thi) + enemy hai => uski pit
+  //   - Agar apni 2+ hain => safe
+
+  let captured=false;
+
+  // Helper: ek cell pe check karo — agar pid ki sirf 1 token hai aur koi enemy bhi hai => pit
+  async function checkAndPit(cellKey, movingPid, movingTid){
+    // Moving player ki tokens us cell pe (move karne ke baad)
+    const ownOnCell=G.tokens.filter(o=>{
+      if(o.pid!==movingPid||o.step===0||o.step>=STEP_DONE)return false;
+      const oc=getCell(o.pid,o.step);
+      return oc&&`${oc[0]}-${oc[1]}`===cellKey;
+    });
+    // Enemy tokens us cell pe
+    const enemiesOnCell=G.tokens.filter(o=>{
+      if(o.pid===movingPid||o.step===0||o.step>=STEP_DONE)return false;
+      const oc=getCell(o.pid,o.step);
+      return oc&&`${oc[0]}-${oc[1]}`===cellKey;
+    });
+    // Apni 2+ tokens = safe block, enemy nahi pit sakti
+    if(ownOnCell.length>=2) return;
+    // Apni 1 token + enemy = enemy pit hogi
+    if(ownOnCell.length===1&&enemiesOnCell.length>=1){
+      SFX.tokenCapture();
+      await sendHomeFast(enemiesOnCell[0]); // ✅ enemy ghar jaegi
+      captured=true;
+      // Bug #3 Fix: G.sixes=0 yahaan se hataya — capture pe sixes penalty bypass nahi honi chahiye
+    }
+  }
+
+  // 1. PREVIOUS CELL CHECK (jahan se token aayi)
+  if(tok.step>=2&&tok.step<=STEP_MAIN_END+1){
+    const prevStep=tok.step-v;
+    if(prevStep>=1&&prevStep<=STEP_MAIN_END){
+      const prevCell=getCell(pid,prevStep);
+      if(prevCell&&!SAFE.has(`${prevCell[0]}-${prevCell[1]}`)){
+        await checkAndPit(`${prevCell[0]}-${prevCell[1]}`,pid,tok.tid);
+      }
+    }
+  }
+
+  // 2. CURRENT CELL CHECK (jahan token aayi)
+  if(tok.step>=1&&tok.step<=STEP_MAIN_END){
+    const cell=getCell(pid,tok.step);
+    if(cell&&!SAFE.has(`${cell[0]}-${cell[1]}`)){
+      await checkAndPit(`${cell[0]}-${cell[1]}`,pid,tok.tid);
+    }
+  }
+
+  // Extra turn logic — shouldGrantExtraTurn with all 3 conditions
+  // captured must be explicitly true — not undefined — to avoid silent bug
+  if(captured) bonus=true;
+
+  renderTokens();
+  await new Promise(r=>setTimeout(r,60));
+  if(!G.over)nextTurn(bonus);
+}
+
+function nextTurn(same){
+  G.rolled=false;
+  _rolling=false; // Bug #6 Fix: always reset rolling guard on new turn
+  G.diceVal=null;
+  G.waiting=false;
+  if(!same){
+    G.turn=(G.turn+1)%PLAYERS.length;
+    let tries=0;
+    while((!PLAYERS[G.turn].active||toksOf(G.turn).every(t=>t.step>=STEP_DONE))&&tries<PLAYERS.length){
+      G.turn=(G.turn+1)%PLAYERS.length;
+      tries++;
+    }
+    if(!PLAYERS[G.turn].active||toksOf(G.turn).every(t=>t.step>=STEP_DONE)){
+      return;
+    }
+  }
+  // Extra turn (same=true) pe sirf dice clickable banao — face reset nahi
+  if(same){
+    // Bug #1 Fix: agar dice busy hai, pehle force-release karo PHIR refreshUI
+    const pid=G.turn;
+    if(dAcc.busy[pid]){
+      dAcc.busy[pid]=false;
+    }
+    // Bug #7 Fix: refreshUI call karo taaki player ko pata chale new roll chahiye
+    refreshUI();
+    PLAYERS.forEach(p=>{
+      const d3d=document.getElementById(`d3d-${p.id}`);
+      const bg=document.getElementById(`pbg-${p.id}`);
+      const lbl=document.getElementById(`lbl-${p.id}`);
+      const box=document.getElementById(`pbox-${p.id}`);
+      const active=G.turn===p.id&&!G.over;
+      if(bg)bg.style.borderColor=active?p.color:"#333";
+      if(lbl)lbl.style.color=active?p.color:"white";
+      if(box)box.style.outline=active?`2px solid ${p.color}`:"none";
+      if(d3d){
+        if(active){d3d.classList.remove("inactive","off");}
+        else{d3d.classList.add("inactive");d3d.classList.remove("off");}
+      }
+    });
+  } else {
+    refreshUI();
+  }
+  renderTokens();
+}
+
+function endGame(){
+  G.over=true;
+  const medals=["🥇","🥈","🥉","4️⃣"];
+  const lines=G.placements.map((pid,i)=>{
+    const name=PLAYERS[pid].label;
+    return `${medals[i]||"  "} ${name}`;
+  });
+  const winner=G.placements[0];
+  const winColor=PLAYERS[winner].color;
+  if(PLAYERS[winner].human) SFX.win();
+  else SFX.lose();
+  const heading=`🎉 ${PLAYERS[winner].label} Wins!`;
+  document.getElementById("win-msg").textContent=heading;
+  document.getElementById("win-places").textContent=lines.join("\n");
+  const winEl=document.getElementById("win");
+  winEl.classList.add("show");
+
+  // Reset trophy animation
+  const trophy=document.getElementById("win-trophy");
+  trophy.style.animation="none";
+  void trophy.offsetWidth;
+  trophy.style.animation="trophyEntrance 0.7s cubic-bezier(.2,1.4,.4,1) forwards";
+  setTimeout(()=>{ trophy.style.animation="trophyFloat 2.2s ease-in-out infinite"; },900);
+
+  // Expanding color rings from center
+  const cx=window.innerWidth/2, cy=window.innerHeight/2;
+  [0,1,2,3].forEach(i=>{
+    const ring=document.createElement("div");
+    const sz=(120+i*90)+"px";
+    ring.className="win-ring";
+    ring.style.cssText=`left:${cx}px;top:${cy}px;width:${sz};height:${sz};--wr-col:${winColor};--wr-dur:${0.8+i*0.18}s;--wr-delay:${i*0.12}s;z-index:1;`;
+    winEl.appendChild(ring);
+    setTimeout(()=>ring.remove(), 2500);
+  });
+
+  // Confetti cannon
+  const canvas=document.getElementById("win-confetti-canvas");
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+  const ctx2=canvas.getContext("2d");
+  const CONFETTI_COLORS=[winColor,"#FFD700","#ffffff","#ff6b9d","#00e5ff","#69ff47",winColor];
+  const pieces=[];
+  const PIECE_COUNT=120;
+  for(let i=0;i<PIECE_COUNT;i++){
+    const side=Math.random()<0.5?0:1;
+    pieces.push({
+      x: side===0 ? canvas.width*0.25 : canvas.width*0.75,
+      y: canvas.height*0.55,
+      vx: (Math.random()-0.5)*14 + (side===0?3:-3),
+      vy: -(Math.random()*14+8),
+      rot: Math.random()*360,
+      rotV: (Math.random()-0.5)*12,
+      w: 7+Math.random()*7,
+      h: 4+Math.random()*5,
+      color: CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)],
+      alpha: 1,
+      shape: Math.random()<0.5?'rect':'circle',
+    });
+  }
+  let confettiFrame=null;
+  let confettiStart=null;
+  const CONFETTI_DUR=3200;
+  function drawConfetti(now){
+    if(!confettiStart) confettiStart=now;
+    const elapsed=now-confettiStart;
+    ctx2.clearRect(0,0,canvas.width,canvas.height);
+    let any=false;
+    pieces.forEach(p=>{
+      p.x+=p.vx;
+      p.y+=p.vy;
+      p.vy+=0.38; // gravity
+      p.vx*=0.99;
+      p.rot+=p.rotV;
+      if(elapsed>CONFETTI_DUR*0.6) p.alpha=Math.max(0,p.alpha-0.018);
+      if(p.alpha<=0||p.y>canvas.height+20) return;
+      any=true;
+      ctx2.save();
+      ctx2.globalAlpha=p.alpha;
+      ctx2.translate(p.x,p.y);
+      ctx2.rotate(p.rot*Math.PI/180);
+      ctx2.fillStyle=p.color;
+      if(p.shape==='circle'){
+        ctx2.beginPath();
+        ctx2.arc(0,0,p.w/2,0,Math.PI*2);
+        ctx2.fill();
+      } else {
+        ctx2.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      }
+      ctx2.restore();
+    });
+    if(any && elapsed<CONFETTI_DUR+1000) confettiFrame=requestAnimationFrame(drawConfetti);
+    else ctx2.clearRect(0,0,canvas.width,canvas.height);
+  }
+  confettiFrame=requestAnimationFrame(drawConfetti);
+  // Store frame id for cleanup on restart
+  window._confettiFrame=confettiFrame;
+}
 
 let _resizeTimer;
 window.addEventListener("resize",()=>{
   clearTimeout(_resizeTimer);
   _cacheValid=false;
-  Object.keys(_slotPxCache).forEach(k=>delete _slotPxCache[k]);
   _resizeTimer=setTimeout(renderTokens,100);
 });
+
+// 🔊 SOUND ENGINE V2 — Rich procedural audio, properly timed
+// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// 🔊 SOUND ENGINE V3 — All sounds synced to DICE_DUR_MS=480ms
+// ══════════════════════════════════════════════════════════════════
+const SFX=(() => {
+  let _muted=false;
+  let _ctx=null;
+
+  function getCtx(){
+    if(!_ctx){try{_ctx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+    if(_ctx&&_ctx.state==='suspended')_ctx.resume().catch(()=>{});
+    return _ctx;
+  }
+
+  function synth(fn){
+    if(_muted)return;
+    const ctx=getCtx();if(!ctx)return;
+    try{fn(ctx);}catch(e){}
+  }
+
+  function mkOut(ctx,vol=0.7){
+    const g=ctx.createGain();g.gain.value=vol;
+    const c=ctx.createDynamicsCompressor();
+    c.threshold.value=-8;c.knee.value=8;c.ratio.value=4;c.attack.value=0.002;c.release.value=0.15;
+    g.connect(c);c.connect(ctx.destination);return g;
+  }
+
+  // FIX Lag1: reverb buffer cached by key — created once, reused forever
+  const _rvBufCache={};
+  function mkReverbBuf(ctx,secs=1.2,decay=2.5){
+    const key=`${Math.round(secs*10)}_${Math.round(decay*10)}`;
+    if(_rvBufCache[key])return _rvBufCache[key];
+    const len=Math.floor(ctx.sampleRate*secs);
+    const buf=ctx.createBuffer(2,len,ctx.sampleRate);
+    for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}
+    return(_rvBufCache[key]=buf);
+  }
+  function mkReverb(ctx,secs=1.2,decay=2.5){const cv=ctx.createConvolver();cv.buffer=mkReverbBuf(ctx,secs,decay);return cv;}
+  function addReverb(ctx,src,dest,wet=0.3,secs=1.2,decay=2.5){
+    const rv=mkReverb(ctx,secs,decay);
+    const g=ctx.createGain();g.gain.value=wet;
+    src.connect(rv);rv.connect(g);g.connect(dest);
+  }
+
+  function tn(ctx,{type='sine',freq,freqEnd,start,dur,gain=0.7,attack=0.005,dest,vRate=0,vDepth=0}){
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.type=type;o.frequency.setValueAtTime(freq,start);
+    if(freqEnd)o.frequency.exponentialRampToValueAtTime(freqEnd,start+dur);
+    if(vRate){
+      const lfo=ctx.createOscillator(),lg=ctx.createGain();
+      lfo.frequency.value=vRate;lg.gain.value=vDepth;
+      lfo.connect(lg);lg.connect(o.frequency);
+      lfo.start(start);lfo.stop(start+dur+0.05);
+    }
+    g.gain.setValueAtTime(0.0001,start);
+    g.gain.linearRampToValueAtTime(gain,start+attack);
+    g.gain.exponentialRampToValueAtTime(0.0001,start+dur);
+    o.connect(g);g.connect(dest);o.start(start);o.stop(start+dur+0.05);
+  }
+
+  // FIX Lag3: pre-allocated 1-sec noise buffer — reused across all nz() calls
+  let _noiseBuf=null;
+  function getNoiseBuf(ctx){
+    if(_noiseBuf)return _noiseBuf;
+    const len=ctx.sampleRate;// 1 second
+    _noiseBuf=ctx.createBuffer(1,len,ctx.sampleRate);
+    const d=_noiseBuf.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+    return _noiseBuf;
+  }
+
+  function nz(ctx,{start,dur,dest,ft='bandpass',ff=2000,Q=1.5,gain=0.5,gainEnd,ffEnd}){
+    const src=ctx.createBufferSource();src.buffer=getNoiseBuf(ctx);src.loop=true;
+    const f=ctx.createBiquadFilter();f.type=ft;f.frequency.value=ff;f.Q.value=Q;
+    if(ffEnd)f.frequency.exponentialRampToValueAtTime(ffEnd,start+dur);
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(gain,start);
+    g.gain.exponentialRampToValueAtTime(gainEnd||0.0001,start+dur);
+    src.connect(f);f.connect(g);g.connect(dest);
+    src.start(start);src.stop(start+dur+0.02);
+  }
+
+  // SOUND_SYNC: diceRoll spans exactly DICE_DUR_MS=480ms
+  // hits spread dense-to-sparse matching the visual spin-to-settle
+  // final thud lands at t=DA exactly when dice animation ends
+  function diceRoll(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.62);
+    const DA=DICE_DUR_MS/1000; // 0.48s — matches animation exactly
+    const rLen=Math.floor(ctx.sampleRate*(DA+0.04));
+    const rBuf=ctx.createBuffer(1,rLen,ctx.sampleRate);
+    const rD=rBuf.getChannelData(0);for(let i=0;i<rLen;i++)rD[i]=Math.random()*2-1;
+    const rSrc=ctx.createBufferSource();rSrc.buffer=rBuf;
+    const rF=ctx.createBiquadFilter();rF.type='bandpass';rF.frequency.value=260;rF.Q.value=0.8;
+    const rG=ctx.createGain();
+    rG.gain.setValueAtTime(0.0001,t);
+    rG.gain.linearRampToValueAtTime(0.22,t+0.07);
+    rG.gain.linearRampToValueAtTime(0.24,t+DA*0.45);
+    rG.gain.exponentialRampToValueAtTime(0.0001,t+DA);
+    rSrc.connect(rF);rF.connect(rG);rG.connect(out);
+    rSrc.start(t);rSrc.stop(t+DA+0.05);
+    // Hits: dense at start (fast spin) → sparse at end (slowing down)
+    const hits=[[0,.9],[.055,.78],[.11,.67],[.175,.57],[.235,.48],[.295,.39],[.355,.31],[.405,.24],[.440,.18],[.465,.12]];
+    hits.forEach(([dt,intensity])=>{
+      const bf=210+Math.random()*120;
+      tn(ctx,{type:'sine',freq:bf,freqEnd:bf*0.55,start:t+dt,dur:0.05+intensity*0.04,gain:0.82*intensity,attack:0.0004,dest:out});
+      tn(ctx,{type:'sine',freq:bf*1.8,freqEnd:bf,start:t+dt,dur:0.03+intensity*0.02,gain:0.28*intensity,attack:0.0004,dest:out});
+      nz(ctx,{start:t+dt,dur:0.007,dest:out,ft:'highpass',ff:5000,Q:0.8,gain:0.82*intensity});
+      nz(ctx,{start:t+dt,dur:0.04+intensity*0.03,dest:out,ft:'bandpass',ff:340+Math.random()*140,Q:3,gain:0.52*intensity});
+    });
+    // Final thud at exactly DA — perfectly synced to dice landing
+    const st=t+DA-0.01;
+    tn(ctx,{type:'sine',freq:190,freqEnd:75,start:st,dur:0.13,gain:0.65,attack:0.001,dest:out});
+    nz(ctx,{start:st,dur:0.09,dest:out,ft:'bandpass',ff:480,Q:2,gain:0.55});
+  });}
+
+  function tokenStep(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.75);
+    nz(ctx,{start:t,dur:0.012,dest:out,ft:'highpass',ff:4500,Q:0.8,gain:0.9});
+    tn(ctx,{type:'sine',freq:240,freqEnd:120,start:t,dur:0.07,gain:0.52,attack:0.001,dest:out});
+    nz(ctx,{start:t,dur:0.05,dest:out,ft:'bandpass',ff:700,Q:3,gain:0.40});
+  });}
+
+  function tokenSpawn(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.6);
+    addReverb(ctx,out,ctx.destination,0.35,1.4);
+    [440,554,659,784].forEach((f,i)=>{
+      tn(ctx,{type:'triangle',freq:f,start:t+i*0.07,dur:0.45,gain:0.5,attack:0.006,dest:out});
+      tn(ctx,{type:'sine',freq:f*2.7,start:t+i*0.07,dur:0.25,gain:0.12,attack:0.003,dest:out});
+    });
+    nz(ctx,{start:t,dur:0.018,dest:out,ft:'highpass',ff:6000,Q:2,gain:0.5});
+  });}
+
+  function tokenCapture(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.65);
+    addReverb(ctx,out,ctx.destination,0.28,0.7);
+    tn(ctx,{type:'sine',freq:80,freqEnd:28,start:t,dur:0.5,gain:0.75,attack:0.001,dest:out});
+    tn(ctx,{type:'sawtooth',freq:58,freqEnd:18,start:t,dur:0.4,gain:0.40,attack:0.001,dest:out});
+    nz(ctx,{start:t,dur:0.14,dest:out,ft:'bandpass',ff:580,Q:3,gain:0.60});
+    nz(ctx,{start:t+0.02,dur:0.07,dest:out,ft:'bandpass',ff:1400,Q:5,gain:0.35});
+    nz(ctx,{start:t,dur:0.035,dest:out,ft:'highpass',ff:4200,Q:2,gain:0.50});
+    tn(ctx,{type:'sawtooth',freq:320,freqEnd:50,start:t,dur:0.42,gain:0.35,attack:0.002,dest:out});
+    [0.09,0.17,0.24].forEach(dt=>nz(ctx,{start:t+dt,dur:0.022,dest:out,ft:'bandpass',ff:1800+Math.random()*2000,Q:4,gain:0.25}));
+  });}
+
+  // tokenCapture is called inside sendHomeFast — sound fires with ring visual, perfectly synced
+  function reverseWalk(){} // intentionally silent — reverse slide is visual only
+
+  function safeStar(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.6);
+    addReverb(ctx,out,ctx.destination,0.45,2.0);
+    [880,1108,1320].forEach((f,i)=>{
+      tn(ctx,{type:'sine',freq:f,start:t+i*0.07,dur:0.9,gain:0.48-i*0.07,attack:0.006,dest:out,vRate:5,vDepth:3});
+      tn(ctx,{type:'sine',freq:f*2.76,start:t+i*0.07,dur:0.35,gain:0.1,attack:0.002,dest:out});
+    });
+    nz(ctx,{start:t,dur:0.018,dest:out,ft:'highpass',ff:6000,Q:2,gain:0.4});
+  });}
+
+  function homeStretch(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.7);
+    addReverb(ctx,out,ctx.destination,0.5,2.2);
+    [523,659,784,659,784,1047].forEach((f,i)=>{
+      tn(ctx,{type:'triangle',freq:f,start:t+i*0.11,dur:0.24,gain:0.58,attack:0.006,dest:out});
+      tn(ctx,{type:'sine',freq:f*2,start:t+i*0.11,dur:0.14,gain:0.18,attack:0.003,dest:out});
+    });
+    [1047,1319,1568].forEach((f,i)=>tn(ctx,{type:'sine',freq:f,start:t+0.75,dur:1.1,gain:0.33-i*0.07,attack:0.02,dest:out,vRate:5,vDepth:4}));
+  });}
+
+  function tokenDone(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.65);
+    addReverb(ctx,out,ctx.destination,0.45,2.0);
+    [880,1108].forEach((f,i)=>{
+      const d=i*0.18;
+      tn(ctx,{type:'sine',freq:f,start:t+d,dur:1.0,gain:0.55,attack:0.008,dest:out});
+      tn(ctx,{type:'sine',freq:f*2.76,start:t+d,dur:0.45,gain:0.13,attack:0.002,dest:out});
+      tn(ctx,{type:'sine',freq:f*1.01,start:t+d,dur:0.75,gain:0.18,attack:0.005,dest:out});
+    });
+    nz(ctx,{start:t,dur:0.018,dest:out,ft:'highpass',ff:5000,Q:2,gain:0.45});
+  });}
+
+  function rolledSix(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.7);
+    addReverb(ctx,out,ctx.destination,0.4,1.6);
+    [523,659,784,1047,1319].forEach((f,i)=>{
+      tn(ctx,{type:'triangle',freq:f,start:t+i*0.075,dur:0.28,gain:0.55,attack:0.005,dest:out});
+      tn(ctx,{type:'sine',freq:f*2,start:t+i*0.075,dur:0.16,gain:0.16,attack:0.003,dest:out});
+    });
+    [0,0.08,0.20,0.33].forEach(dt=>nz(ctx,{start:t+dt,dur:0.045,dest:out,ft:'highpass',ff:6500+Math.random()*3000,Q:3,gain:0.25}));
+  });}
+
+  function noMove(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.55);
+    tn(ctx,{type:'square',freq:110,start:t,dur:0.17,gain:0.65,attack:0.003,dest:out});
+    tn(ctx,{type:'square',freq:88,start:t+0.18,dur:0.17,gain:0.65,attack:0.003,dest:out});
+    nz(ctx,{start:t,dur:0.07,dest:out,ft:'lowpass',ff:380,Q:1,gain:0.28});
+  });}
+
+  function threeSixesSkip(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.6);
+    [0,0.14,0.28].forEach((d,i)=>{
+      tn(ctx,{type:'square',freq:[440,330,220][i],start:t+d,dur:0.11,gain:0.58,attack:0.003,dest:out});
+      nz(ctx,{start:t+d,dur:0.07,dest:out,ft:'lowpass',ff:550,Q:1,gain:0.22});
+    });
+  });}
+
+  function win(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.60);
+    addReverb(ctx,out,ctx.destination,0.55,2.8);
+    [261,330,392,523].forEach(f=>tn(ctx,{type:'sawtooth',freq:f,start:t,dur:0.55,gain:0.25,attack:0.01,dest:out}));
+    [523,659,784,988,1047,1319,1568].forEach((f,i)=>{
+      tn(ctx,{type:'triangle',freq:f,start:t+0.5+i*0.1,dur:0.33,gain:0.45,attack:0.006,dest:out});
+      tn(ctx,{type:'sine',freq:f*2,start:t+0.5+i*0.1,dur:0.18,gain:0.14,attack:0.003,dest:out});
+    });
+    [1047,1319,1568,2093].forEach((f,i)=>tn(ctx,{type:'sine',freq:f,start:t+1.25,dur:2.0,gain:0.30-i*0.06,attack:0.03,dest:out,vRate:5.5,vDepth:6}));
+    [0,0.14,0.3,0.5,0.7,0.9,1.1,1.35].forEach(dt=>nz(ctx,{start:t+dt,dur:0.065,dest:out,ft:'highpass',ff:5000+Math.random()*5000,Q:3,gain:0.25}));
+    [0,0.5,1.0].forEach(dt=>{
+      tn(ctx,{type:'sine',freq:88,freqEnd:38,start:t+dt,dur:0.38,gain:0.50,attack:0.001,dest:out});
+      nz(ctx,{start:t+dt,dur:0.11,dest:out,ft:'bandpass',ff:290,Q:2,gain:0.35});
+    });
+  });}
+
+  function lose(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.55);
+    addReverb(ctx,out,ctx.destination,0.35,1.4);
+    tn(ctx,{type:'sawtooth',freq:420,freqEnd:155,start:t,dur:0.95,gain:0.58,attack:0.01,dest:out});
+    tn(ctx,{type:'sine',freq:315,freqEnd:115,start:t+0.1,dur:0.85,gain:0.32,attack:0.02,dest:out});
+    nz(ctx,{start:t,dur:0.28,dest:out,ft:'lowpass',ff:480,Q:1,gain:0.18});
+  });}
+
+  function gameStart(){synth(ctx=>{
+    const t=ctx.currentTime;const out=mkOut(ctx,0.7);
+    addReverb(ctx,out,ctx.destination,0.4,1.4);
+    [[0,523],[0.1,659],[0.2,784],[0.3,1047],[0.45,784],[0.55,1047]].forEach(([d,f])=>{
+      tn(ctx,{type:'triangle',freq:f,start:t+d,dur:0.19,gain:0.48,attack:0.006,dest:out});
+      tn(ctx,{type:'sine',freq:f*1.5,start:t+d,dur:0.11,gain:0.18,attack:0.003,dest:out});
+    });
+    [523,659,784].forEach(f=>tn(ctx,{type:'sine',freq:f,start:t+0.65,dur:0.65,gain:0.28,attack:0.02,dest:out,vRate:4,vDepth:3}));
+  });}
+
+  // SOUND_SYNC: tokenStep throttle = 80ms (tighter than JUMP_MS=130ms — every step sounds)
+  let _lastStepTime=0;
+  function tokenStepThrottled(){
+    const now=Date.now();
+    if(now-_lastStepTime<80)return;
+    _lastStepTime=now;tokenStep();
+  }
+
+  function toggleMute(){
+    _muted=!_muted;
+    const btn=document.getElementById('btn-mute');
+    if(btn){btn.textContent=_muted?'🔇':'🔊';btn.title=_muted?'Unmute':'Mute';btn.classList.toggle('muted',_muted);}
+    return _muted;
+  }
+
+  return{
+    diceRoll,tokenStep:tokenStepThrottled,tokenSpawn,tokenCapture,
+    reverseWalk,safeStar,homeStretch,tokenDone,rolledSix,noMove,
+    threeSixesSkip,win,lose,gameStart,toggleMute,isMuted:()=>_muted,
+  };
+})();
+
+function restartGame(){
+  if(window._confettiFrame){ cancelAnimationFrame(window._confettiFrame); window._confettiFrame=null; }
+  const canvas=document.getElementById("win-confetti-canvas");
+  if(canvas){ const c=canvas.getContext("2d"); c.clearRect(0,0,canvas.width,canvas.height); }
+  // Remove any leftover win-rings
+  document.querySelectorAll(".win-ring").forEach(r=>r.remove());
+  document.getElementById("win").classList.remove("show");
+  document.getElementById("startup").style.display="flex";
+}
 
 document.addEventListener("contextmenu",e=>e.preventDefault());
 document.addEventListener("selectstart",e=>e.preventDefault());
@@ -1763,9 +2198,12 @@ document.addEventListener("touchstart",e=>{if(e.touches.length>1)e.preventDefaul
 let _lastTap=0;
 document.addEventListener("touchend",e=>{const now=Date.now();if(now-_lastTap<300)e.preventDefault();_lastTap=now;},{passive:false});
 window.addEventListener("wheel",e=>{if(e.ctrlKey)e.preventDefault();},{passive:false});
+document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&["+","-","=","0"].includes(e.key))e.preventDefault();});
 
+// ── Start ─────────────────────────────────────────────────────────────────────
 buildBoard();
 
 </script>
 </body>
 </html>
+ 
